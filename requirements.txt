@@ -1,0 +1,9 @@
+python-sat==0.1.8.dev9
+ortools==9.15.6755
+gurobipy==13.0.3
+matplotlib==3.10.8
+pandas==2.2.3
+seaborn==0.13.2
+reportlab==5.0.1
+cplex==22.1.2.1
+docplex==2.30.251

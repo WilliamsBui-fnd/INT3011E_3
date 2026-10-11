@@ -1,0 +1,37 @@
+{
+  "timestamp_local": "2026-10-11 06:03:32 +0000",
+  "phase": "smoke",
+  "n_values": [
+    1,
+    2,
+    3,
+    4,
+    8
+  ],
+  "methods": [
+    "SAT_Pairwise",
+    "SAT_Sequential",
+    "SAT_Commander",
+    "SAT_Product",
+    "SAT_Binary",
+    "CP_ORTools",
+    "ILP_Gurobi"
+  ],
+  "repetitions": 1,
+  "timeout_seconds": 15.0,
+  "workers_per_solver": 1,
+  "base_seed": 2026,
+  "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+  "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+  "cpu_count": 2,
+  "packages": {
+    "python-sat": "0.1.8.dev9",
+    "ortools": "9.15.6755",
+    "gurobipy": "13.0.3",
+    "cplex": "22.1.2.1",
+    "docplex": "2.30.251",
+    "pandas": "2.2.3",
+    "matplotlib": "3.10.8",
+    "seaborn": "0.13.2"
+  }
+}
