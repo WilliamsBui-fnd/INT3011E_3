@@ -13,6 +13,7 @@ report/build-wrapper/
 *.out
 .env
 gurobi.lic
+*.lic
 *.zip
 test.pdf
 .idea/

@@ -44,13 +44,39 @@ Clone project vào ổ đĩa tạm của Colab:
 Nếu Colab yêu cầu restart runtime sau khi cài, hãy restart, mount Drive và
 `%cd /content/INT3011E_3` lại.
 
-### 0.3. Chọn thư mục lưu kết quả
+### 0.3. Cấu hình Gurobi Academic WLS
+
+Trên máy Mac, project tự tìm file `gurobi.lic` trong thư mục gốc. Trên Colab,
+hãy tải file license lên thư mục **riêng tư** của Google Drive, ví dụ
+`MyDrive/private_licenses/gurobi.lic`; không đặt file trong repository, notebook
+hoặc thư mục kết quả. Sau khi mount Drive, chạy cell sau mỗi lần runtime mới:
+
+```python
+import os
+import shutil
+from pathlib import Path
+
+license_source = Path("/content/drive/MyDrive/private_licenses/gurobi.lic")
+assert license_source.is_file(), "Chưa tìm thấy gurobi.lic trong Drive riêng tư"
+license_runtime = Path("/content/gurobi.lic")
+shutil.copyfile(license_source, license_runtime)
+license_runtime.chmod(0o600)
+os.environ["GRB_LICENSE_FILE"] = str(license_runtime)
+print("Đã cấu hình đường dẫn license Gurobi; không hiển thị nội dung file.")
+```
+
+Gurobi cần kết nối mạng để xác thực WLS. Không chạy cell in nội dung license,
+không điền ba giá trị WLS vào notebook và không chia sẻ thư mục Drive này.
+Biến `GRB_LICENSE_FILE` phải trỏ tới **file**, theo
+[hướng dẫn chính thức của Gurobi](https://support.gurobi.com/hc/en-us/articles/360013417211-Where-do-I-place-the-Gurobi-license-file-gurobi-lic).
+
+### 0.4. Chọn thư mục lưu kết quả
 
 ```python
 RESULT_ROOT = "/content/drive/MyDrive/NQueens_BTL1_results"
 ```
 
-### 0.4. Chạy unit test
+### 0.5. Chạy unit test và xác nhận license
 
 ```python
 !python -m unittest discover -s tests -v
@@ -59,6 +85,22 @@ RESULT_ROOT = "/content/drive/MyDrive/NQueens_BTL1_results"
 Chỉ chuyển sang Phase 1 khi kết quả cuối cùng hiện `OK`. Test CPLEX CP
 có thể hiện `skipped` trên Colab thông thường do không có executable
 `cpoptimizer`; đây là giới hạn môi trường IBM, không phải lỗi SAT/CP-SAT.
+
+Kiểm tra Gurobi ở $N=46$ (2116 biến nhị phân, vượt giới hạn 2000 biến của
+license mặc định). Kết quả cần là `SAT` và `Solution_Valid=True`:
+
+```python
+!python benchmark.py \
+  --phase standard --n-values 46 --methods ILP_Gurobi \
+  --repetitions 1 --timeout 45 \
+  --output-dir "{RESULT_ROOT}/gurobi_license_check"
+
+import pandas as pd
+check = pd.read_csv(f"{RESULT_ROOT}/gurobi_license_check/benchmark_raw.csv")
+display(check[["N", "Method", "Status", "Solution_Valid"]])
+```
+
+Đây chỉ là kiểm tra license; **không** gộp thư mục này vào số liệu báo cáo.
 
 ## Phase 1 - Smoke test
 
@@ -112,9 +154,26 @@ raw_standard = pd.read_csv(f"{RESULT_ROOT}/standard/benchmark_raw.csv")
 display(pd.crosstab(raw_standard["Method"], raw_standard["Status"]))
 ```
 
-Với Gurobi license miễn phí, `ILP_Gurobi` từ `N=64` có thể hiện
-`LICENSE_LIMIT`. Đây là kết quả hợp lệ về giới hạn môi trường, không phải
-`TIMEOUT`.
+File `standard` cũ đã có các lượt Gurobi `LICENSE_LIMIT` tại $N=64,128$.
+Cơ chế resume sẽ bỏ qua chúng; dùng phase chạy lại dưới đây.
+
+### Phase 2A - Chạy lại Gurobi với license mới
+
+Chỉ chạy Gurobi tại $N=64,128$, cùng năm lần lặp và giới hạn 60 giây. Lưu
+riêng để giữ nguyên dữ liệu cũ, sau đó gộp theo thứ tự ở Phase 4:
+
+```python
+!python benchmark.py \
+  --phase standard --n-values 64 128 --methods ILP_Gurobi \
+  --repetitions 5 --timeout 60 \
+  --output-dir "{RESULT_ROOT}/gurobi_licensed_standard"
+
+gurobi_new = pd.read_csv(f"{RESULT_ROOT}/gurobi_licensed_standard/benchmark_raw.csv")
+display(pd.crosstab(gurobi_new["N"], gurobi_new["Status"]))
+```
+
+Nếu còn `LICENSE_LIMIT`, dừng trước Phase 3 và kiểm tra license file/tài khoản.
+Không sửa CSV cũ bằng tay.
 
 ## Phase 2B - CPLEX MIP và CPLEX CP
 
@@ -150,7 +209,8 @@ cơ chế resume; chương trình chỉ bổ sung run 4 và 5:
 ## Phase 3 - Benchmark kích thước lớn
 
 Phase này chạy `N = 256, 512, 1000`, 3 lần/cấu hình, timeout 120 giây.
-Mặc định loại Pairwise vì nguy cơ hết RAM và loại Gurobi vì license giới hạn.
+Mặc định loại Pairwise và Gurobi vì cả hai có thể tiêu thụ nhiều RAM ở kích
+thước lớn. License WLS bỏ giới hạn kích thước mô hình, nhưng không tăng RAM.
 
 ```python
 !python benchmark.py \
@@ -161,7 +221,7 @@ Mặc định loại Pairwise vì nguy cơ hết RAM và loại Gurobi vì licen
 Không thêm `--include-pairwise-large` trên Colab Free. Tùy chọn này chỉ dành
 cho máy high-memory và có thể làm sập runtime.
 
-Nếu đã cấu hình Gurobi Academic/WLS và muốn thử riêng `N=256`:
+Sau khi Phase 2A hoạt động, thử Gurobi riêng ở `N=256`:
 
 ```python
 !python benchmark.py \
@@ -170,20 +230,32 @@ Nếu đã cấu hình Gurobi Academic/WLS và muốn thử riêng `N=256`:
   --methods ILP_Gurobi \
   --repetitions 3 \
   --timeout 120 \
-  --output-dir "{RESULT_ROOT}/gurobi_academic_256"
+  --output-dir "{RESULT_ROOT}/gurobi_licensed_large"
 ```
 
-Không đưa WLS secret hoặc file `gurobi.lic` lên GitHub.
+Chỉ thử `N=512` hoặc `N=1000` trên runtime nhiều RAM, từng kích thước một.
+Mô hình MIP dùng $N^2$ biến nhị phân: tương ứng 262144 và 1000000 biến.
+Không đưa file `gurobi.lic` lên GitHub.
 
 ## Phase 4 - Gộp dữ liệu và vẽ biểu đồ
 
+Gộp các phase cũ trước, sau đó các run Gurobi mới. Khi trùng khóa
+`(phase, N, method, run)`, kết quả mới thay thế `LICENSE_LIMIT` cũ trong bộ
+tổng hợp; file raw cũ vẫn được giữ nguyên.
+
 ```python
-!python combine_results.py \
-  "{RESULT_ROOT}/smoke" \
-  "{RESULT_ROOT}/standard" \
-  "{RESULT_ROOT}/cplex" \
-  "{RESULT_ROOT}/large" \
-  --output-dir "{RESULT_ROOT}/combined"
+import subprocess
+from pathlib import Path
+
+inputs = ["smoke", "standard", "cplex", "large"]
+inputs += [name for name in ("gurobi_licensed_standard", "gurobi_licensed_large")
+           if (Path(RESULT_ROOT) / name / "benchmark_raw.csv").is_file()]
+subprocess.run(
+    ["python", "combine_results.py",
+     *(str(Path(RESULT_ROOT) / name) for name in inputs),
+     "--output-dir", str(Path(RESULT_ROOT) / "combined")],
+    check=True,
+)
 ```
 
 ```python
@@ -215,4 +287,6 @@ for name in (
 lặp SAT đo dao động thời gian của môi trường, không phải các quá trình
 tìm kiếm ngẫu nhiên độc lập. Phải nêu rõ điều này trong báo cáo.
 
-Luôn dùng dữ liệu trong `NQueens_BTL1_results/combined` cho báo cáo chính.
+Sau khi có số liệu mới, chạy `prepare_report.py` và cập nhật các câu số liệu
+trong `report/main.tex`, `README.md` và slide trước khi xuất bản bản nộp.
+File PDF hiện tại vẫn mô tả dữ liệu 238 run cũ.

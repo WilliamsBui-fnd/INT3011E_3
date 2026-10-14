@@ -90,7 +90,7 @@ Các trạng thái quan trọng:
 min/max, tỷ lệ thành công và số lần theo từng trạng thái. Số đo thiếu được để
 trống, không thay bằng 0.
 
-## Kết quả hiện có
+## Kết quả hiện có (trước khi cấp Academic WLS)
 
 Bộ dữ liệu chuẩn tại `NQueens_BTL1_results/combined` gồm 238 lượt chạy:
 
@@ -106,8 +106,9 @@ Bộ dữ liệu chuẩn tại `NQueens_BTL1_results/combined` gồm 238 lượt
 - Các kết quả UNSAT đều thuộc `N=2` và `N=3`.
 - Product là SAT encoding duy nhất hoàn thành cả ba run tại `N=1000`, trung
   vị 28.127 giây trong môi trường đã đo.
-- Gurobi chạy được đến `N=32`; `N=64` và `N=128` bị giới hạn bởi size-limited
-  license. Đây là giới hạn môi trường, không phải thất bại thuật toán.
+- Bộ dữ liệu này được đo trước khi có Academic WLS: Gurobi chạy được đến
+  `N=32`; `N=64` và `N=128` có `LICENSE_LIMIT`. Các run này cần được đo lại
+  theo [hướng dẫn Colab](COLAB_GUIDE.md), không sửa CSV cũ bằng tay.
 - CPLEX CP Optimizer hoàn thành `N=8,16,32`; CPLEX MIP gặp license limit tại
   `N=32`.
 
@@ -144,13 +145,21 @@ và `plot_clauses.png`.
 
 Báo cáo dùng lớp Elsevier `cas-sc` và cần biên dịch bằng XeLaTeX. File
 `report_template.tex` là entry point tương thích khi biên dịch từ thư mục gốc.
+PDF và slide hiện tại vẫn dựa trên bộ dữ liệu 238 run cũ; phải cập nhật các
+nhận định và số liệu sau khi chạy lại Gurobi rồi mới dùng làm bản nộp cuối.
 
 ## License thương mại và bảo mật
 
-Project không kèm license Gurobi hoặc CPLEX. Nếu dùng Academic WLS trên Colab,
-phải giữ kín `WLSACCESSID`, `WLSSECRET`, `LICENSEID` và file `gurobi.lic`.
-Các giá trị này đã được loại khỏi Git bằng `.gitignore` và không được ghi trực
-tiếp vào notebook hoặc mã nguồn.
+Project không kèm license Gurobi hoặc CPLEX. Trên máy local, Gurobi solver tự
+dùng `gurobi.lic` ở thư mục gốc project nếu file tồn tại; `GRB_LICENSE_FILE`
+được đặt sẵn sẽ luôn được ưu tiên. Trên Colab, đặt license trong Drive riêng
+tư rồi làm theo [Phase 0.3](COLAB_GUIDE.md). Không ghi nội dung license vào
+mã nguồn, notebook, CSV, log hoặc Git. `.gitignore` chặn mọi file `*.lic`;
+kiểm tra trước khi commit bằng `git status --short` và
+`git check-ignore -v gurobi.lic`. File local nên có quyền `600`.
+
+Chỉ file license được thay đổi; điều này không mở khóa CPLEX MIP/CP Optimizer,
+vì chúng dùng hệ thống cấp phép riêng của IBM.
 
 ## Kiểm thử
 

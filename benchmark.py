@@ -25,7 +25,6 @@ import re
 import subprocess
 import sys
 import time
-import traceback
 from pathlib import Path
 
 import pandas as pd
@@ -59,7 +58,7 @@ PHASES = {
         "repetitions": 5,
         "timeout": 60.0,
     },
-    # Tranh Pairwise O(N^3) va Gurobi size-limited license theo mac dinh.
+    # Tranh Pairwise O(N^3) va mo hinh MIP N^2 bien qua lon tren Colab Free.
     "large": {
         "n_values": (256, 512, 1000),
         "methods": (
@@ -163,12 +162,18 @@ def _process_entry(result_queue, target_func, args):
     try:
         result_queue.put({"kind": "RESULT", "stats": target_func(*args)})
     except BaseException as exc:
+        error_message = str(exc)
+        status = classify_error(type(exc).__name__, error_message)
+        # WLS failures may include license details. Never persist their raw
+        # exception text or traceback in checkpoint files or IPC payloads.
+        if target_func is worker_ilp:
+            error_message = f"Gurobi {status}; details suppressed"
         result_queue.put(
             {
                 "kind": "ERROR",
                 "error_type": type(exc).__name__,
-                "error_message": str(exc),
-                "traceback": traceback.format_exc(limit=8),
+                "error_message": error_message,
+                "status": status,
             }
         )
 
@@ -292,7 +297,7 @@ def make_raw_row(phase, n, method, run_index, seed, outcome):
         error_message = outcome.get("error_message", "")
         row.update(
             {
-                "Status": classify_error(
+                "Status": outcome.get("status") or classify_error(
                     error_type, error_message, outcome.get("exit_code")
                 ),
                 "Error_Type": error_type,

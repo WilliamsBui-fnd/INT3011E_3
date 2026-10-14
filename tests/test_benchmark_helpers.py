@@ -1,19 +1,39 @@
 import csv
+import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 
 from benchmark import (
     classify_error,
     completed_keys,
+    make_raw_row,
     normalize_statuses,
     write_summary,
 )
+from nqueens.ilp_solver import configure_gurobi_license
 
 
 class BenchmarkHelperTests(unittest.TestCase):
+    def test_explicit_license_path_takes_precedence(self):
+        with patch.dict("os.environ", {"GRB_LICENSE_FILE": "/private/test.lic"}):
+            configure_gurobi_license()
+            self.assertEqual(os.environ["GRB_LICENSE_FILE"], "/private/test.lic")
+
+    def test_gurobi_error_status_survives_redaction(self):
+        outcome = {
+            "kind": "ERROR", "wall_time": 0.1, "exit_code": 0,
+            "error_type": "GurobiError",
+            "error_message": "Gurobi LICENSE_LIMIT; details suppressed",
+            "status": "LICENSE_LIMIT",
+        }
+        row = make_raw_row("standard", 64, "ILP_Gurobi", 1, 2026, outcome)
+        self.assertEqual(row["Status"], "LICENSE_LIMIT")
+        self.assertEqual(row["Error_Message"], outcome["error_message"])
+
     def test_error_classification(self):
         self.assertEqual(
             classify_error(

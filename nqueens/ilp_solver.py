@@ -1,12 +1,26 @@
+import os
 import time
-import gurobipy as gp
-from gurobipy import GRB
+from pathlib import Path
+
+
+def configure_gurobi_license():
+    """Use an explicit license path, or the private file next to this project."""
+    if os.environ.get("GRB_LICENSE_FILE"):
+        return
+    local_license = Path(__file__).resolve().parent.parent / "gurobi.lic"
+    if local_license.is_file():
+        os.environ["GRB_LICENSE_FILE"] = str(local_license)
+
 
 class NQueensILPSolver:
     def __init__(self, n):
         self.n = n
         
     def solve(self, time_limit=None, num_workers=1, random_seed=0):
+        configure_gurobi_license()
+        import gurobipy as gp
+        from gurobipy import GRB
+
         start_time = time.time()
         env = None
         model = None

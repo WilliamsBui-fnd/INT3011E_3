@@ -142,15 +142,17 @@ def write_environment_macros(environment, path):
 
 
 def validate_inputs(summary, raw):
+    if raw.empty or summary.empty:
+        raise SystemExit("Result data is empty")
     if raw.duplicated(["Phase", "N", "Method", "Run"]).any():
         raise SystemExit("Combined raw data contains duplicate run keys")
     sat = raw[raw["Status"] == "SAT"]
     if not sat["Solution_Valid"].astype(str).str.lower().eq("true").all():
         raise SystemExit("At least one SAT solution is not marked valid")
-    if len(raw) != 238 or len(summary) != 84:
-        raise SystemExit(
-            f"Unexpected result dimensions: raw={len(raw)}, summary={len(summary)}"
-        )
+    raw_pairs = set(zip(raw["N"], raw["Method"]))
+    summary_pairs = set(zip(summary["N"], summary["Method"]))
+    if raw_pairs != summary_pairs or summary.duplicated(["N", "Method"]).any():
+        raise SystemExit("Summary methods and sizes do not match raw data")
 
 
 def main():
