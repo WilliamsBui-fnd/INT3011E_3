@@ -1,0 +1,32 @@
+{
+  "timestamp_local": "2026-10-14 20:38:06 +0000",
+  "phase": "large",
+  "n_values": [
+    256
+  ],
+  "methods": [
+    "ILP_Gurobi"
+  ],
+  "repetitions": 3,
+  "timeout_seconds": 120.0,
+  "workers_per_solver": 1,
+  "base_seed": 2026,
+  "platform": "Linux-6.6.122+-x86_64-with-glibc2.39",
+  "python": "3.13.16 (main, Oct  1 2026, 15:40:24) [GCC 13.3.0]",
+  "cpu_count": 2,
+  "cpu_model": "x86_64",
+  "memory_total_gib": 12.67,
+  "sat_random_seed_applied": false,
+  "timing_scope": "Total_Time includes model/encoding construction and solve time; Wall_Time also includes child-process startup and IPC overhead.",
+  "packages": {
+    "python-sat": "0.1.8.dev9",
+    "ortools": "9.15.6755",
+    "gurobipy": "13.0.3",
+    "cplex": "22.1.2.1",
+    "docplex": "2.30.251",
+    "pandas": "2.2.3",
+    "matplotlib": "3.10.8",
+    "seaborn": "0.13.2"
+  },
+  "timestamp_first_run": "2026-10-14 20:34:44 +0000"
+}

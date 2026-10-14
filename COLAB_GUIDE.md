@@ -253,16 +253,16 @@ inputs += [name for name in ("gurobi_licensed_standard", "gurobi_licensed_large"
 subprocess.run(
     ["python", "combine_results.py",
      *(str(Path(RESULT_ROOT) / name) for name in inputs),
-     "--output-dir", str(Path(RESULT_ROOT) / "combined")],
+     "--output-dir", str(Path(RESULT_ROOT) / "combined_licensed")],
     check=True,
 )
 ```
 
 ```python
 !python plot_results.py \
-  --input "{RESULT_ROOT}/combined/benchmark_results.csv" \
-  --raw "{RESULT_ROOT}/combined/benchmark_raw.csv" \
-  --output-dir "{RESULT_ROOT}/combined"
+  --input "{RESULT_ROOT}/combined_licensed/benchmark_results.csv" \
+  --raw "{RESULT_ROOT}/combined_licensed/benchmark_raw.csv" \
+  --output-dir "{RESULT_ROOT}/combined_licensed"
 ```
 
 Xem ba biểu đồ:
@@ -273,7 +273,7 @@ from IPython.display import display, Image
 for name in (
     "plot_time.png", "plot_status.png", "plot_variables.png", "plot_clauses.png"
 ):
-    display(Image(filename=f"{RESULT_ROOT}/combined/{name}"))
+    display(Image(filename=f"{RESULT_ROOT}/combined_licensed/{name}"))
 ```
 
 ## Các file phải giữ lại cho báo cáo
@@ -289,4 +289,5 @@ tìm kiếm ngẫu nhiên độc lập. Phải nêu rõ điều này trong báo 
 
 Sau khi có số liệu mới, chạy `prepare_report.py` và cập nhật các câu số liệu
 trong `report/main.tex`, `README.md` và slide trước khi xuất bản bản nộp.
-File PDF hiện tại vẫn mô tả dữ liệu 238 run cũ.
+Bản nộp hiện tại đã dùng dữ liệu `combined_licensed` gồm 241 run; chỉ cần
+lặp lại bước này nếu chạy thêm thí nghiệm.

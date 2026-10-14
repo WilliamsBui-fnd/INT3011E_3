@@ -61,11 +61,13 @@ hóa Pairwise, Sequential Counter, Commander, Product và Binary được triể
 trên PySAT/Glucose3 và so sánh với OR-Tools CP-SAT, Gurobi MIP, CPLEX MIP và
 CPLEX CP Optimizer. Quy trình thực nghiệm có timeout cưỡng bức, checkpoint,
 kiểm tra nghiệm và phân biệt timeout, giới hạn giấy phép và tiến trình bị hệ
-điều hành dừng. Bộ dữ liệu gồm 238 lượt chạy trên các kích thước từ $N=1$ đến
-$N=1000$. Tất cả 169 nghiệm SAT thu được đều vượt qua bộ kiểm tra độc lập; 14
+điều hành dừng. Bộ dữ liệu sau khi bổ sung Gurobi Academic WLS gồm 241 lượt
+chạy trên các kích thước từ $N=1$ đến $N=1000$. Tất cả 182 nghiệm SAT thu được
+đều vượt qua bộ kiểm tra độc lập; 14
 lượt UNSAT tại $N=2,3$ cũng phù hợp với tính chất bài toán. Trên môi trường
-Google Colab đã sử dụng, Product là mã hóa duy nhất hoàn thành cả ba lần tại
-$N=1000$, với trung vị 28.127 giây, 1,298,508 biến và 11,942,164 mệnh đề.
+Google Colab đã sử dụng, Gurobi hoàn thành 5/5 lượt tại $N=64,128$ và 3/3 lượt
+tại $N=256$. Product là mã hóa SAT duy nhất hoàn thành cả ba lần tại $N=1000$,
+với trung vị 28.127 giây, 1,298,508 biến và 11,942,164 mệnh đề.
 Kết quả cũng cho thấy kích thước CNF không đủ để dự đoán thời gian giải: hiệu
 năng thay đổi không đơn điệu theo $N$ và phụ thuộc mạnh vào cấu trúc encoding
 cũng như heuristic của solver.
@@ -87,12 +89,34 @@ hiệu năng solver. Cùng một tập ràng buộc có thể được biểu di
 SAT ở dạng CNF, bằng các ràng buộc toàn cục trong Constraint Programming (CP),
 hoặc bằng hệ ràng buộc tuyến tính trên biến nhị phân trong MIP.
 
+Sự khác biệt giữa ba biểu diễn nằm ở cấu trúc mà solver có thể khai thác.
+SAT yêu cầu chuyển ràng buộc đếm thành CNF và có thể tạo nhiều biến phụ; CP
+giữ được ràng buộc \texttt{AllDifferent}; MIP dùng biến nhị phân cùng các bất
+đẳng thức tuyến tính. Bài toán vì thế phù hợp để khảo sát chi phí của mô hình
+hóa tách biệt với việc tìm một nghiệm khả thi.
+
 Mục tiêu của nghiên cứu không phải đếm mọi lời giải, mà tìm một cấu hình hợp lệ
 hoặc chứng minh không tồn tại cấu hình. Đóng góp chính gồm: (i) triển khai và
 kiểm thử năm SAT encoding cho AMO; (ii) xây dựng bốn mô hình đối chứng bằng
 OR-Tools, Gurobi và CPLEX; (iii) xây dựng pipeline thực nghiệm có thể tiếp tục
 sau khi Colab bị ngắt; và (iv) đánh giá đồng thời thời gian, quy mô encoding và
 tỷ lệ hoàn thành đến $N=1000$.
+
+\section{Bối cảnh và câu hỏi nghiên cứu}
+
+Các solver SAT hiện đại kết hợp tìm kiếm CDCL và học mệnh đề; hiệu năng của
+chúng phụ thuộc vào công thức CNF được cung cấp~\cite{glucose2009}. Đối với
+ràng buộc at-most-one (AMO), Pairwise ngắn gọn và không dùng biến phụ, trong
+khi Sequential Counter dùng biến trạng thái để giảm số clause
+~\cite{sinz2005}. PySAT cung cấp nhiều kiểu cardinality encoding với cùng giao
+diện~\cite{pysat-paper,pysat-docs}. N-Queens cũng có mô hình CP tự nhiên với
+ba ràng buộc \texttt{AllDifferent}~\cite{ortools-nqueens}.
+
+Báo cáo trả lời ba câu hỏi: (i) kích thước CNF của năm cách mã hóa AMO thay
+đổi như thế nào theo $N$; (ii) sự thay đổi đó có dự báo được thời gian giải
+hay không; và (iii) SAT, CP-SAT và MIP khác nhau ra sao về tỷ lệ hoàn thành
+trong cùng giới hạn thời gian. So sánh thực nghiệm được giới hạn bởi những
+giá trị $N$ đã chạy được và điều kiện cấp phép của từng solver.
 
 \section{Mô hình bài toán}
 
@@ -105,6 +129,11 @@ hình SAT và MIP sử dụng các nhóm ràng buộc sau:
     && \text{với mọi đường chéo }d.
 \end{align}
 
+Mỗi ô có đúng một biến cơ sở, nên mô hình SAT/MIP bắt đầu với $N^2$ biến.
+Mô hình MIP cài đặt $2N$ ràng buộc hàng/cột và $4N-2$ ràng buộc đường chéo,
+trong đó các đường chéo chỉ có một ô tạo bất đẳng thức dư nhưng không làm
+thay đổi tập nghiệm. SAT chỉ sinh AMO cho đường chéo dài ít nhất hai ô.
+
 Trong SAT, ràng buộc bằng 1 được tách thành at-least-one (ALO) và at-most-one
 (AMO). Với nhóm literal $X=(x_1,\ldots,x_k)$, ALO là clause
 $(x_1\mathbin{\mathrm{OR}}\cdots\mathbin{\mathrm{OR}}x_k)$. AMO được thay đổi
@@ -113,6 +142,11 @@ trị từ 0 đến $N-1$ để biểu diễn cột của
 quân hậu; mô hình chỉ cần ba ràng buộc toàn cục
 \texttt{AllDifferent} trên $q_i$, $q_i+i$ và $q_i-i$, đúng với mô hình N-Queens
 được OR-Tools công bố~\cite{ortools-nqueens}.
+
+Hai mô hình biểu diễn cùng một tập cấu hình: hàng $r$ được gán cột $q_r=c$
+đúng khi $x_{r,c}=1$. \texttt{AllDifferent} trên $q_r$ loại xung đột cột;
+hai biểu thức còn lại lần lượt loại hai hướng đường chéo. Điều này cho phép
+kiểm tra nghiệm do mọi solver trả về bằng cùng một hàm xác minh độc lập.
 
 \section{Các phương pháp giải}
 
@@ -134,6 +168,56 @@ quá một literal đúng. Ngoài ra, Glucose3 là solver CDCL có heuristic h�
 những đặc trưng này giải thích vì sao số clause không ánh xạ đơn giản thành thời
 gian chạy~\cite{glucose2009}.
 
+Với nhóm $X$ gồm $k$ literal, Pairwise tạo $\binom{k}{2}$ clause nhị phân và
+không cần biến phụ. Sequential Counter biểu diễn thông tin tiền tố đã có
+literal đúng bằng biến phụ. Binary gán cho literal đúng một mã dài
+$\lceil\log_2 k\rceil$ bit. Bảng~\ref{tab:amo-complexity} tóm tắt bậc kích
+thước của từng nhóm AMO theo đúng cách cài đặt trong project; ALO bổ sung đúng
+một clause độ dài $k$ cho mỗi hàng/cột.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Bậc kích thước của một nhóm AMO gồm $k$ literal. Các hằng số và
+  trường hợp nhóm rất nhỏ phụ thuộc cài đặt cụ thể.}
+  \label{tab:amo-complexity}
+  \begin{tabular}{lcc}
+    \toprule
+    Mã hóa & Biến phụ & Clause \\
+    \midrule
+    Pairwise & $0$ & $O(k^2)$ \\
+    Sequential & $O(k)$ & $O(k)$ \\
+    Binary & $O(\log k)$ & $O(k\log k)$ \\
+    Commander & $O(\sqrt{k})$ & $O(k\sqrt{k})$ \\
+    Product & $O(\sqrt{k})$ & $O(k)$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+Trong Commander, $k$ literal được chia thành các nhóm kích thước xấp xỉ
+$\sqrt{k}$. Mỗi nhóm có một biến chỉ huy $c_g$; hai chiều kéo theo giữa
+$c_g$ và phép OR của nhóm bảo đảm $c_g$ đúng chính xác khi nhóm có literal
+đúng. AMO Pairwise được áp dụng bên trong mỗi nhóm và giữa các chỉ huy. Product
+đặt các literal lên lưới phụ $p\times q$ với $p=\lceil\sqrt{k}\rceil$,
+$q=\lceil k/p\rceil$. Một literal đúng kéo theo hai biến chỉ báo hàng và cột
+tương ứng; AMO Pairwise trên hai tập chỉ báo ngăn đồng thời hai literal đúng.
+Với nhóm tối đa bốn literal, bản cài đặt dùng Pairwise trực tiếp.
+
+\subsection{Lập luận bảo toàn nghiệm}
+
+ALO cùng AMO trên mỗi hàng và cột buộc đúng một hậu tại mỗi hàng/cột. AMO
+trên hai họ đường chéo loại mọi cặp hậu tấn công nhau. Vì vậy phép gán CNF
+thỏa mãn luôn cho một bàn cờ hợp lệ. Chiều ngược lại, từ một bàn cờ hợp lệ
+đặt các biến ô tương ứng bằng đúng và các biến ô còn lại bằng sai; mọi nhóm
+ALO/AMO đều thỏa. Các biến phụ của Sequential và Binary có thể được gán
+theo encoding của PySAT. Với Commander, đặt chỉ huy đúng cho nhóm chứa
+literal đúng. Với Product, đặt đúng chỉ báo hàng/cột chứa literal đúng. Do
+đó mọi bàn cờ hợp lệ đều mở rộng thành một phép gán CNF thỏa mãn.
+
+Kiểm thử truth-table xét toàn bộ $2^5$ phép gán của nhóm năm literal cho cả
+năm encoding và so sánh kết quả solver với điều kiện nhiều nhất một bit
+đúng. Kiểm thử đầu-cuối tiếp tục xác nhận SAT cho $N=1,4,\ldots,8$ và
+UNSAT cho $N=2,3$, đồng thời kiểm tra mọi nghiệm bằng hàm độc lập.
+
 \subsection{CP-SAT và CP Optimizer}
 
 Mô hình OR-Tools CP-SAT và CPLEX CP Optimizer đều dùng $N$ biến nguyên cùng ba
@@ -141,6 +225,12 @@ ràng buộc \texttt{AllDifferent}. CP-SAT là solver CP trên nền SAT cho bi�
 nguyên~\cite{ortools-cpsat}; CP Optimizer cung cấp các ràng buộc toàn cục cho
 bài toán tổ hợp~\cite{ibm-cp}. Mỗi solver được giới hạn một worker để giảm sai
 lệch do mức độ song song khác nhau.
+
+Mô hình CP không cần liệt kê $N^2$ biến ô. Mỗi $q_r\in\{0,\ldots,N-1\}$
+chọn cột cho hàng $r$; ba ràng buộc \texttt{AllDifferent} lần lượt áp dụng
+cho các dãy $(q_r)$, $(q_r+r)$ và $(q_r-r)$. Cùng một biểu diễn mức cao
+được đưa cho hai engine CP, song cơ chế lan truyền và tìm kiếm nội bộ khác
+nhau nên thời gian vẫn có thể khác đáng kể.
 
 \subsection{Gurobi MIP và CPLEX MIP}
 
@@ -150,6 +240,11 @@ CPLEX được cấu hình một thread, seed theo lần lặp và time limit n�
 tuân theo mô hình formulate--solve--query của API tối ưu toán học
 \cite{gurobi-manual}; CPLEX MIP dùng cùng mô hình để tạo phép so sánh giữa hai
 solver thương mại.
+
+Sau khi solver dừng, nếu có nghiệm khả thi, chương trình lấy các ô có giá trị
+lớn hơn $0{,}5$ và kiểm tra lại số hậu, miền tọa độ, hàng, cột và đường chéo.
+Trạng thái hết giờ được phân biệt với vô nghiệm đã chứng minh; lỗi license
+được ghi thành \texttt{LICENSE\_LIMIT}, không gán thời gian giải bằng không.
 
 \section{Thiết kế thực nghiệm}
 
@@ -164,8 +259,12 @@ cho mỗi solver và bốn phase:
 
 Môi trường ghi nhận Linux, Python \ResultPython{}, PySAT \ResultPySAT{},
 OR-Tools \ResultORTools{}, Gurobi \ResultGurobi{} và CPLEX \ResultCPLEX{}.
-Pairwise không được chạy ở phase large vì số clause tăng mạnh; Gurobi cũng
-không chạy ở phase này vì license giới hạn đã xuất hiện từ $N=64$.
+Pairwise không được chạy ở phase large vì số clause tăng mạnh. Sau đợt đo
+ban đầu, giấy phép Gurobi Academic WLS đã cho phép chạy lại $N=64,128$,
+năm lần mỗi kích thước, và chạy bổ sung $N=256$ ba lần. Các file kết quả
+ban đầu được giữ nguyên; khi gộp, mỗi run Gurobi mới thay thế đúng khóa
+$(phase,N,method,run)$ cũ bị \texttt{LICENSE\_LIMIT}. Vì vậy bộ gộp có
+thêm ba run ở $N=256$, không nhân đôi mười run tại $N=64,128$.
 
 \texttt{Total\_Time} gồm thời gian xây dựng mô hình/encoding và thời gian giải,
 nhưng không gồm chi phí khởi tạo process cha. \texttt{Wall\_Time} bao gồm cả
@@ -173,14 +272,28 @@ khởi tạo process và IPC. Với Glucose3, seed trong script không được 
 solver; vì vậy các lần lặp SAT đo độ dao động thời gian trên cùng cấu hình tìm
 kiếm mặc định, không phải các lần chạy ngẫu nhiên độc lập.
 
+Mỗi lượt chạy được thực hiện trong process riêng. Process cha đợi tối đa
+giới hạn thời gian đã chọn, sau đó dừng process con nếu cần; ngay sau mỗi
+lượt, một dòng CSV được ghi và đồng bộ xuống đĩa để có thể tiếp tục khi Colab
+ngắt. Chỉ các run có trạng thái SAT hoặc UNSAT mới được dùng để tính trung vị,
+min và max của \texttt{Total\_Time}; tỷ lệ thành công được tính trên toàn bộ
+run, kể cả timeout và lỗi. Không nội suy thời gian cho run chưa hoàn thành.
+
+Các run bổ sung dùng một phiên Colab khác đợt đo gốc. Metadata mới ghi nhận
+2 CPU logic và 12{,}67 GiB RAM, nhưng metadata cũ không lưu model CPU và
+tổng RAM. Vì vậy các so sánh thời gian giữa Gurobi bổ sung và các solver đã
+đo trước đó chỉ mang tính mô tả, không phải một phép so sánh phần cứng được
+kiểm soát chặt.
+
 \section{Kết quả và thảo luận}
 
 \subsection{Tính đúng đắn và mức độ hoàn thành}
 
-Bộ dữ liệu có 238 run, không có khóa $(phase,N,method,run)$ bị trùng. Tổng hợp
-trạng thái được trình bày trong Bảng~\ref{tab:status}. Tất cả 169 nghiệm SAT
+Bộ dữ liệu có 241 run, không có khóa $(phase,N,method,run)$ bị trùng. Tổng hợp
+trạng thái được trình bày trong Bảng~\ref{tab:status}. Tất cả 182 nghiệm SAT
 đều có \texttt{Solution\_Valid=True}; 14 kết quả UNSAT đều thuộc $N=2$ và
-$N=3$. Không có \texttt{INVALID\_SOLUTION}.
+$N=3$. Không có \texttt{INVALID\_SOLUTION}. Ba run
+\texttt{LICENSE\_LIMIT} còn lại đều thuộc CPLEX MIP, không thuộc Gurobi.
 
 \begin{table}[htbp]
   \centering
@@ -204,10 +317,12 @@ nên một điểm thời gian không biểu diễn xác suất hoàn thành.
 \subsection{Thời gian giải}
 
 Hình~\ref{fig:time} và Bảng~\ref{tab:fastest} cho thấy không có một phương pháp
-thắng ở mọi kích thước. Sequential nhanh nhất tại $N=16$, Gurobi nhanh nhất tại
-$N=32$, OR-Tools dẫn đầu tại $N=64$, còn Product tốt nhất ở $N=128$, $256$ và
-$1000$. Tại $N=512$, Binary có trung vị thấp nhất. Các kết luận này chỉ áp dụng
-cho môi trường và tham số đã ghi nhận.
+thắng ở mọi kích thước. Sequential có trung vị thấp nhất tại $N=16$; Gurobi
+MIP tại $N=32,64,128$; Product tại $N=256,1000$; Binary tại $N=512$.
+Với $N=64,128$, Gurobi hoàn thành 5/5 run, trung vị lần lượt 0{,}098 và
+0{,}194 giây. Tại $N=256$, Gurobi hoàn thành 3/3 run với trung vị
+3{,}078 giây, còn Product là 2{,}704 giây. Những thứ hạng này mô tả bộ dữ
+liệu đã gộp, không khẳng định ưu thế tổng quát giữa các solver.
 
 \begin{figure*}[htbp]
   \centering
@@ -223,6 +338,22 @@ cho môi trường và tham số đã ghi nhận.
   \label{tab:fastest}
   \resizebox{\linewidth}{!}{\input{\ReportPrefix generated/fastest_table.tex}}
 \end{table}
+
+Bảng~\ref{tab:gurobi-comparison} đặt các run mới cạnh những phương pháp
+đã chạy trên cùng kích thước. Tại $N=64$, Product và Binary đều timeout
+5/5 lần trong khi Pairwise, CP-SAT và Gurobi hoàn thành. Ở $N=128$ cả
+Product và Binary đều trở lại thành công 5/5 lần, nhưng trung vị vẫn lớn
+hơn Gurobi trong bộ dữ liệu này. Tại $N=256$, CP-SAT chỉ hoàn thành 2/3
+run và Pairwise không được đưa vào phase lớn.
+
+\begin{table*}[htbp]
+  \centering
+  \caption{Trung vị thời gian theo giây của các run thành công; trong ngoặc
+  là số run thành công/tổng số run. TO: toàn bộ run timeout; dấu gạch ngang:
+  không chạy.}
+  \label{tab:gurobi-comparison}
+  \resizebox{\textwidth}{!}{\input{\ReportPrefix generated/gurobi_comparison_table.tex}}
+\end{table*}
 
 Bảng~\ref{tab:sat-time} tập trung vào SAT. Product timeout ở $N=32,64$ nhưng
 hoàn thành cả ba lần ở $N=1000$; Binary timeout tại $N=64$ nhưng hoàn thành tại
@@ -240,9 +371,10 @@ hiện tượng này thành bảo đảm rằng Product luôn tốt ở kích th
 
 OR-Tools hoàn thành 2/3 lần ở $N=256$ với thời gian thành công khoảng
 40--43 giây, sau đó timeout hoàn toàn tại $N=512,1000$. CPLEX CP hoàn thành
-3/3 lần tại $N=8,16,32$; CPLEX MIP gặp giới hạn license ở $N=32$. Gurobi gặp
-giới hạn license từ $N=64$. Các giá trị \texttt{LICENSE\_LIMIT} phản ánh môi
-trường cấp phép, không phải thất bại thuật toán.
+3/3 lần tại $N=8,16,32$; CPLEX MIP gặp giới hạn license ở $N=32$. Trong dữ
+liệu gốc, Gurobi bị giới hạn tại $N=64,128$; các kết quả đó đã được thay bằng
+run Academic WLS hợp lệ. Giới hạn cấp phép CPLEX còn lại phản ánh môi trường,
+không phải thất bại thuật toán.
 
 Ba run Commander tại $N=1000$ kết thúc với exit code $-9$, tức SIGKILL. Điều
 này phù hợp với tình huống process bị hệ thống Colab dừng do áp lực tài nguyên,
@@ -275,30 +407,49 @@ Product có 1,298,508 biến và 11,942,164 clause, vẫn hoàn thành với tru
 \section{Hạn chế và nguy cơ ảnh hưởng tính hợp lệ}
 
 Thứ nhất, Colab là môi trường chia sẻ; mô hình CPU và tổng RAM chưa được lưu
-trong bộ metadata cũ, nên không nên so sánh trị tuyệt đối với máy khác. Thứ
+trong bộ metadata cũ, còn Gurobi WLS chạy trong một phiên sau đó. Không nên
+diễn giải thứ hạng thời gian như một benchmark được kiểm soát phần cứng. Thứ
 hai, số lần lặp khác nhau giữa các phase (1, 3 hoặc 5), và SAT không dùng seed
 ngẫu nhiên. Thứ ba, timeout ở process cha làm mất số biến/clause và không cho
-biết run dừng trong encoding hay solving. Thứ tư, giới hạn license làm thu hẹp
-miền kích thước của Gurobi và CPLEX MIP. Cuối cùng, nghiên cứu chỉ tìm một lời
+biết run dừng trong encoding hay solving. Thứ tư, giới hạn license CPLEX MIP
+và RAM Colab làm thu hẹp miền kích thước có thể so sánh; Gurobi chỉ được
+chạy bổ sung đến $N=256$. Cuối cùng, nghiên cứu chỉ tìm một lời
 giải khả thi; kết quả không đại diện cho bài toán đếm toàn bộ nghiệm N-Queens.
 
 \section{Kết luận}
 
 Project đã triển khai đầy đủ các nhóm phương pháp được yêu cầu và xác minh tính
-đúng đắn trên các trường hợp SAT/UNSAT nhỏ. Thực nghiệm đến $N=1000$ cho thấy
+đúng đắn trên các trường hợp SAT/UNSAT nhỏ. Bộ dữ liệu 241 run đến $N=1000$
+cho thấy
 việc chọn encoding có ảnh hưởng quyết định: Pairwise có ít biến nhưng bùng nổ
 clause, Sequential suy giảm mạnh từ $N=64$, trong khi Product và Binary mở rộng
-tốt hơn ở một số kích thước lớn. Tuy nhiên, các bất thường không đơn điệu nhấn
-mạnh rằng không thể đánh giá encoding chỉ bằng số biến hoặc số clause; cần báo
-cáo đồng thời thời gian, tỷ lệ hoàn thành và giới hạn môi trường.
+tốt hơn ở một số kích thước lớn. Gurobi Academic WLS giải thành công toàn bộ
+run bổ sung tại $N=64,128,256$; song do thực nghiệm qua nhiều phiên Colab,
+không thể suy rộng thứ hạng thời gian thành ưu thế thuật toán tuyệt đối. Các
+bất thường không đơn điệu nhấn mạnh rằng không thể đánh giá encoding chỉ bằng
+số biến hoặc số clause; cần báo cáo đồng thời thời gian, tỷ lệ hoàn thành và
+giới hạn môi trường.
 
 \section*{Data availability}
 
 Mã nguồn, unit test, hướng dẫn Colab, dữ liệu thô, bảng tổng hợp và biểu đồ được
 lưu tại \url{\RepositoryURL}. File \texttt{benchmark\_raw.csv} được xem là dữ
-liệu gốc; mọi bảng và hình trong báo cáo có thể tái tạo bằng
+liệu gốc; thư mục \texttt{combined\_licensed} chứa bản gộp dùng trong báo cáo
+này, còn các thư mục phase giữ nguyên dữ liệu trước khi thay thế run bị
+giới hạn license. Mọi bảng và hình trong báo cáo có thể tái tạo bằng
 \texttt{combine\_results.py}, \texttt{plot\_results.py} và
 \texttt{prepare\_report.py}.
+
+\section*{CRediT authorship contribution statement}
+
+Bùi Đình Cảnh: Conceptualization, Methodology, Software, Validation,
+Investigation, Data curation, Visualization, Writing -- original draft,
+Writing -- review and editing.
+
+\section*{Declaration of competing interest}
+
+Tác giả tuyên bố không có lợi ích tài chính hoặc quan hệ cá nhân có thể
+ảnh hưởng tới công trình này.
 
 \section*{Tuyên bố về công cụ AI hỗ trợ}
 

@@ -59,7 +59,7 @@ def draw_slide_decorations(canvas, doc):
 
 def create_slide_deck():
     project_dir = Path(__file__).resolve().parent
-    result_dir = project_dir / "NQueens_BTL1_results" / "combined"
+    result_dir = project_dir / "NQueens_BTL1_results" / "combined_licensed"
     pdf_filename = str(project_dir / "BaiGiang_NQueens_ChiTiet.pdf")
     doc = SimpleDocTemplate(
         pdf_filename,
@@ -194,7 +194,7 @@ def create_slide_deck():
     <b>Sinh viên:</b> Bùi Đình Cảnh &nbsp;&nbsp; <b>MSSV:</b> 24021392 &nbsp;&nbsp; <b>Lớp:</b> INT3011E_3<br/>
     <b>Email:</b> buidinhcanh2006@gmail.com<br/><br/>
     <b>Bộ giải sử dụng:</b> PySAT/Glucose3, OR-Tools CP-SAT, Gurobi MIP, CPLEX MIP và CPLEX CP Optimizer<br/>
-    <b>Môi trường thực nghiệm:</b> Google Colab (2 CPU logic; timeout 15/60/120 giây tùy phase; RAM không được lưu trong metadata)
+    <b>Môi trường thực nghiệm:</b> Google Colab (2 CPU logic; timeout 15/60/120 giây tùy phase; các lượt Gurobi bổ sung ở phiên khác)
     </para>
     """
     story.append(Paragraph(meta_html, style_body))
@@ -439,9 +439,9 @@ Q = [model.NewIntVar(0, n - 1, f'Q_{i}') for i in range(n)]<br/><br/>
         Paragraph("• <b>Đường chéo chính &lt;= 1:</b> sum(x<sub>r,c</sub>, r-c=k) &lt;= 1 với mọi k.", style_bullet),
         Paragraph("• <b>Đường chéo phụ &lt;= 1:</b> sum(x<sub>r,c</sub>, r+c=k) &lt;= 1 với mọi k.", style_bullet),
         Spacer(1, 10),
-        Paragraph("<b>2. Bộ giải Gurobi & Lỗi Hạn chế Giấy phép (License Limit):</b>", style_h2),
+        Paragraph("<b>2. Gurobi Academic WLS:</b>", style_h2),
         Paragraph("• Gurobi là bộ giải ILP thương mại hàng đầu thế giới.", style_bullet),
-        Paragraph("• <b>Hiện tượng LIMIT tại N &gt;= 64:</b> license hiện dùng giới hạn tối đa <b>2000 biến</b>. Ở N=64 có 64 x 64 = 4096 biến nhị phân nên bộ giải từ chối chạy.", style_bullet)
+        Paragraph("• Academic WLS cho phép chạy lại các cấu hình từng bị giới hạn: <b>N=64,128 đều SAT 5/5; N=256 SAT 3/3</b>. Trung vị tương ứng 0.098, 0.194 và 3.078 giây.", style_bullet)
     ]
 
     t_ilp = Table([[ilp_content]], colWidths=[710])
@@ -467,14 +467,14 @@ Q = [model.NewIntVar(0, n - 1, f'Q_{i}') for i in range(n)]<br/><br/>
         ["8", "0.001s", "0.003s", "0.002s", "0.001s", "0.001s", "0.006s", "0.003s"],
         ["16", "0.015s", "0.008s", "0.151s", "0.397s", "0.129s", "0.015s", "0.010s"],
         ["32", "0.036s", "0.288s", "0.045s", "TIMEOUT", "9.090s", "0.058s", "0.010s"],
-        ["64", "0.322s", "18.143s", "0.998s", "TIMEOUT", "TIMEOUT", "0.311s", "LICENSE"],
-        ["128", "3.063s", "TIMEOUT", "1.153s", "0.719s", "0.908s", "1.944s", "LICENSE"],
-        ["256", "—", "TIMEOUT", "8.309s", "2.704s", "3.147s", "41.473s (2/3)", "—"],
+        ["64", "0.322s", "18.143s", "0.998s", "TIMEOUT", "TIMEOUT", "0.311s", "0.098s"],
+        ["128", "3.063s", "TIMEOUT", "1.153s", "0.719s", "0.908s", "1.944s", "0.194s"],
+        ["256", "—", "TIMEOUT", "8.309s", "2.704s", "3.147s", "41.473s (2/3)", "3.078s"],
         ["512", "—", "TIMEOUT", "16.003s", "14.004s", "13.158s", "TIMEOUT", "—"],
         ["1000", "—", "TIMEOUT", "KILLED", "28.127s", "TIMEOUT", "TIMEOUT", "—"],
     ]
 
-    t_b = Table(b_data, colWidths=[40, 65, 75, 75, 75, 65, 95, 80])
+    t_b = Table(b_data, colWidths=[40, 85, 90, 90, 90, 80, 125, 110])
     t_b.setStyle(TableStyle([
         ('BACKGROUND', (0,0), (-1,0), COLOR_HEADER),
         ('TEXTCOLOR', (0,0), (-1,0), colors.white),
@@ -487,13 +487,12 @@ Q = [model.NewIntVar(0, n - 1, f'Q_{i}') for i in range(n)]<br/><br/>
     ]))
 
     if os.path.exists(img_time_path):
-        img_time = Image(img_time_path, width=320, height=230)
-        t_slide7 = Table([[t_b, img_time]], colWidths=[380, 330])
-        t_slide7.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-            ('PADDING', (0,0), (-1,-1), 4),
-        ]))
-        story.append(t_slide7)
+        story.append(t_b)
+        story.append(Spacer(1, 8))
+        img_time = Image(img_time_path, width=450, height=245)
+        t_chart = Table([[img_time]], colWidths=[710])
+        t_chart.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
+        story.append(t_chart)
     else:
         story.append(t_b)
 
@@ -534,8 +533,8 @@ Q = [model.NewIntVar(0, n - 1, f'Q_{i}') for i in range(n)]<br/><br/>
     story.append(Spacer(1, 10))
 
     phenom_content = [
-        Paragraph("<b>1. Sập Giấy phép Gurobi ILP (License Limit):</b>", style_h2),
-        Paragraph("• Gurobi báo lỗi ngắt phép tính ngay lập tức khi N ≥ 64 do vượt ngưỡng <b>2000 biến nhị phân</b> của bản miễn phí.", style_bullet),
+        Paragraph("<b>1. Giới hạn giấy phép còn lại thuộc CPLEX:</b>", style_h2),
+        Paragraph("• Ba lượt CPLEX MIP tại N=32 có trạng thái LICENSE_LIMIT. Academic WLS của Gurobi không cấp phép cho CPLEX; toàn bộ 13 lượt Gurobi đo lại đều SAT hợp lệ.", style_bullet),
         Spacer(1, 8),
         Paragraph("<b>2. Commander bị hệ điều hành dừng tại N=1000:</b>", style_bullet),
         Paragraph("• Ba run có exit code -9 (SIGKILL). Không có log kernel nên chỉ gắn nhãn KILLED, không khẳng định nguyên nhân là hết RAM.", style_bullet),
@@ -562,7 +561,7 @@ Q = [model.NewIntVar(0, n - 1, f'Q_{i}') for i in range(n)]<br/><br/>
 
     qa_content = [
         Paragraph("<b>1. Tổng kết Phương pháp Tốt nhất:</b>", style_h2),
-        Paragraph("• <b>Không có phương pháp thắng ở mọi N:</b> Sequential nhanh nhất tại N=16, Gurobi tại N=32, OR-Tools tại N=64, Product tại N=128/256/1000 và Binary tại N=512.", style_bullet),
+        Paragraph("• <b>Không có phương pháp thắng ở mọi N:</b> Sequential nhanh nhất tại N=16, Gurobi tại N=32/64/128, Product tại N=256/1000 và Binary tại N=512. Các lượt Gurobi mới chạy trong phiên Colab khác.", style_bullet),
         Paragraph("• <b>Khi báo cáo:</b> luôn trình bày thời gian cùng tỷ lệ hoàn thành, timeout, license limit và SIGKILL; không suy rộng ngoài môi trường đã đo.", style_bullet),
         Spacer(1, 10),
         Paragraph("<b>2. Bộ Câu hỏi Phản biện Hội đồng Thường gặp:</b>", style_h2),

@@ -45,7 +45,8 @@ Các phương pháp đã triển khai:
 │   └── utils.py                 # Chuyển đổi và kiểm tra nghiệm
 ├── tests/                       # Unit test và truth-table AMO
 ├── NQueens_BTL1_results/        # Dữ liệu thực nghiệm theo phase
-│   └── combined/                # Bộ dữ liệu và biểu đồ chuẩn dùng trong báo cáo
+│   ├── combined/                # Bộ dữ liệu trước khi cấp Academic WLS
+│   └── combined_licensed/       # Bộ dữ liệu chuẩn dùng trong báo cáo cuối
 ├── report/                      # Báo cáo Elsevier cas-sc và tài liệu tham khảo
 ├── COLAB_GUIDE.md               # Hướng dẫn chạy từng phase trên Google Colab
 └── PROJECT_STATUS.md            # Trạng thái hoàn thiện và hạn chế còn lại
@@ -90,46 +91,47 @@ Các trạng thái quan trọng:
 min/max, tỷ lệ thành công và số lần theo từng trạng thái. Số đo thiếu được để
 trống, không thay bằng 0.
 
-## Kết quả hiện có (trước khi cấp Academic WLS)
+## Kết quả thực nghiệm
 
-Bộ dữ liệu chuẩn tại `NQueens_BTL1_results/combined` gồm 238 lượt chạy:
+Bộ dữ liệu chuẩn tại `NQueens_BTL1_results/combined_licensed` gồm 241 lượt chạy:
 
 | Trạng thái | Số lượt |
 |---|---:|
-| SAT | 169 |
+| SAT | 182 |
 | UNSAT | 14 |
 | TIMEOUT | 39 |
-| LICENSE_LIMIT | 13 |
+| LICENSE_LIMIT | 3 |
 | KILLED | 3 |
 
-- Tất cả 169 nghiệm SAT đều vượt qua bộ kiểm tra N-Queens độc lập.
+- Tất cả 182 nghiệm SAT đều vượt qua bộ kiểm tra N-Queens độc lập.
 - Các kết quả UNSAT đều thuộc `N=2` và `N=3`.
 - Product là SAT encoding duy nhất hoàn thành cả ba run tại `N=1000`, trung
   vị 28.127 giây trong môi trường đã đo.
-- Bộ dữ liệu này được đo trước khi có Academic WLS: Gurobi chạy được đến
-  `N=32`; `N=64` và `N=128` có `LICENSE_LIMIT`. Các run này cần được đo lại
-  theo [hướng dẫn Colab](COLAB_GUIDE.md), không sửa CSV cũ bằng tay.
+- Với Academic WLS, Gurobi hoàn thành 5/5 lượt tại `N=64,128` và 3/3 lượt
+  tại `N=256`. Trung vị lần lượt là 0.098, 0.194 và 3.078 giây. Bộ dữ liệu
+  gộp thay thế các lượt `LICENSE_LIMIT` cũ bằng kết quả đo lại, giữ nguyên
+  dữ liệu gốc trước khi cấp license trong `combined`.
 - CPLEX CP Optimizer hoàn thành `N=8,16,32`; CPLEX MIP gặp license limit tại
-  `N=32`.
+  `N=32` (ba lượt). Academic WLS của Gurobi không cấp phép cho CPLEX.
 
 Không suy rộng các kết quả trên thành thứ hạng tuyệt đối giữa solver: Colab là
-môi trường chia sẻ, số lần lặp khác nhau giữa phase và các run timeout không
-trả lại thống kê mô hình.
+môi trường chia sẻ, các lượt Gurobi bổ sung được đo trong phiên Colab khác,
+số lần lặp khác nhau giữa phase và các run timeout không trả lại thống kê mô
+hình.
 
 ## Tái tạo bảng và biểu đồ
 
-```bash
-python3 combine_results.py \
-  NQueens_BTL1_results/smoke \
-  NQueens_BTL1_results/standard \
-  NQueens_BTL1_results/cplex \
-  NQueens_BTL1_results/large \
-  --output-dir NQueens_BTL1_results/combined
+File raw và bảng tổng hợp của bộ dữ liệu cuối đã được lưu tại
+`NQueens_BTL1_results/combined_licensed`. Vì gói kết quả chuyển về máy chỉ
+chứa CSV gộp cùng metadata của hai phase Gurobi mới, không cần chạy lại bước
+gộp để tái tạo hình và bảng. Nếu muốn gộp lại từ các phase riêng, hãy dùng
+những thư mục phase gốc còn lưu trên Drive theo [COLAB_GUIDE.md](COLAB_GUIDE.md).
 
+```bash
 python3 plot_results.py \
-  --input NQueens_BTL1_results/combined/benchmark_results.csv \
-  --raw NQueens_BTL1_results/combined/benchmark_raw.csv \
-  --output-dir NQueens_BTL1_results/combined
+  --input NQueens_BTL1_results/combined_licensed/benchmark_results.csv \
+  --raw NQueens_BTL1_results/combined_licensed/benchmark_raw.csv \
+  --output-dir NQueens_BTL1_results/combined_licensed
 
 python3 prepare_report.py
 ```
@@ -145,8 +147,9 @@ và `plot_clauses.png`.
 
 Báo cáo dùng lớp Elsevier `cas-sc` và cần biên dịch bằng XeLaTeX. File
 `report_template.tex` là entry point tương thích khi biên dịch từ thư mục gốc.
-PDF và slide hiện tại vẫn dựa trên bộ dữ liệu 238 run cũ; phải cập nhật các
-nhận định và số liệu sau khi chạy lại Gurobi rồi mới dùng làm bản nộp cuối.
+PDF và slide hiện tại dựa trên bộ dữ liệu 241 lượt đã gộp kết quả Gurobi
+Academic WLS. Biên dịch lại bằng `xelatex report_template.tex` và BibTeX theo
+quy trình LaTeX, hoặc dùng bản PDF đã xuất sẵn.
 
 ## License thương mại và bảo mật
 

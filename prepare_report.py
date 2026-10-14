@@ -109,6 +109,23 @@ def write_fastest_table(summary, path):
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_gurobi_comparison_table(summary, path):
+    methods = ["ILP_Gurobi", "CP_ORTools", "SAT_Pairwise", "SAT_Product", "SAT_Binary"]
+    lookup = {(int(row.N), row.Method): row for row in summary.itertuples(index=False)}
+    lines = [
+        r"\begin{tabular}{rccccc}",
+        r"\toprule",
+        r"$N$ & Gurobi MIP & CP-SAT & SAT Pairwise & SAT Product & SAT Binary \\",
+        r"\midrule",
+    ]
+    for n in (64, 128, 256):
+        cells = [result_cell(lookup[(n, method)]._asdict()) if (n, method) in lookup else "--"
+                 for method in methods]
+        lines.append(f"{n} & " + " & ".join(cells) + r" \\")
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def write_status_table(raw, path):
     counts = raw["Status"].value_counts()
     ordered = ["SAT", "UNSAT", "TIMEOUT", "LICENSE_LIMIT", "KILLED", "OOM", "ERROR"]
@@ -118,7 +135,7 @@ def write_status_table(raw, path):
         if count:
             lines.append(f"{latex_escape(status)} & {count} \\\\"
             )
-    lines.extend([r"\midrule", f"Tổng & {len(raw)} \\\\ ", r"\bottomrule", r"\end{tabular}"])
+    lines.extend([r"\midrule", f"Tổng & {len(raw)} \\\\", r"\bottomrule", r"\end{tabular}"])
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -159,7 +176,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--results-dir", type=Path,
-        default=Path("NQueens_BTL1_results/combined"),
+        default=Path("NQueens_BTL1_results/combined_licensed"),
     )
     parser.add_argument(
         "--environment", type=Path,
@@ -181,6 +198,7 @@ def main():
 
     write_sat_table(summary, generated_dir / "sat_performance_table.tex")
     write_fastest_table(summary, generated_dir / "fastest_table.tex")
+    write_gurobi_comparison_table(summary, generated_dir / "gurobi_comparison_table.tex")
     write_status_table(raw, generated_dir / "status_table.tex")
     environment = json.loads(args.environment.read_text(encoding="utf-8"))
     write_environment_macros(environment, generated_dir / "environment.tex")
