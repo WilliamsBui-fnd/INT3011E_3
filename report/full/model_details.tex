@@ -1,0 +1,49 @@
+\subsection{Từ bàn cờ sang ràng buộc và biến CNF}
+
+Trong mã nguồn, biến ô $(r,c)$ được đánh số
+\begin{equation}
+  v(r,c)=rN+c+1,\qquad 0\leq r,c<N.
+\end{equation}
+Đánh số từ 1 phù hợp với quy ước literal của PySAT; literal âm biểu thị phủ
+định. Với $N=4$, nghiệm có các ô
+$(0,1),(1,3),(2,0),(3,2)$ tương ứng các biến $2,8,9,15$. Đây là một ví
+dụ kiểm tra chuyển đổi chỉ số, không phải nghiệm duy nhất của $N=4$.
+
+Mỗi hàng và mỗi cột nhận một clause ALO. Chẳng hạn, hàng $r$ có
+\begin{equation}
+  (x_{r,0}\lor x_{r,1}\lor\cdots\lor x_{r,N-1}).
+\end{equation}
+AMO trên cùng nhóm ngăn hai ô cùng đúng; ALO cộng AMO tạo exactly-one.
+Với đường chéo, chỉ cần AMO. Hai họ đường chéo được nhận biết bởi hằng số
+$r-c$ và $r+c$. Trong cài đặt SAT, đường chéo dài một ô được bỏ qua vì AMO
+trên một literal luôn đúng; MIP vẫn tạo bất đẳng thức tương ứng nhưng nó dư.
+
+Với $N\geq2$, có $2N$ nhóm hàng/cột và $4N-6$ đường chéo dài ít nhất
+hai ô cần AMO. Nếu dùng Pairwise cho mọi nhóm, số clause AMO có thể tính
+trực tiếp:
+\begin{equation}
+ C_{\mathrm{pair}}(N)
+ =2N\binom{N}{2}+4\binom{N}{3}+2\binom{N}{2}.
+\end{equation}
+Hạng đầu thuộc hàng/cột. Mỗi hướng chéo có dãy độ dài
+$1,2,\ldots,N-1,N,N-1,\ldots,1$; cộng số cặp trên cả hai hướng cho hai hạng
+còn lại. Sau khi thêm $2N$ clause ALO, $N=8$ cho
+$C_{\mathrm{pair}}(8)+16=744$ clause, đúng bằng số do chương trình ghi nhận.
+Đây là phép kiểm tra chéo giữa công thức và implementation, đồng thời giải
+thích vì sao Pairwise tăng bậc ba theo $N$.
+
+\subsection{Đồng nhất nghiệm giữa ba biểu diễn}
+
+Đặt $q_r=c$ khi và chỉ khi $x_{r,c}=1$. Exactly-one trên từng hàng làm ánh
+xạ này xác định được. Exactly-one trên cột tương đương các $q_r$ đôi một
+khác nhau. Hai quân ở hàng $r\neq s$ nằm chung đường chéo chính khi
+$q_r-r=q_s-s$, và chung đường chéo phụ khi $q_r+r=q_s+s$.
+Vì vậy ba ràng buộc \texttt{AllDifferent} của CP, các nhóm AMO/ALO của
+SAT và các phương trình/bất phương trình MIP diễn tả cùng tập bàn cờ.
+
+Hàm \texttt{validate\_solution} không cần tin vào trạng thái do solver báo.
+Nó đòi đúng $N$ tọa độ trong miền, rồi kiểm tra bốn tập khóa: hàng, cột,
+$r-c$ và $r+c$. Cách kiểm tra độc lập này phát hiện cả nghiệm trùng ô,
+sai miền và xung đột đường chéo. Nó được gọi sau mọi lần solver báo SAT;
+run sai sẽ có trạng thái \texttt{INVALID\_SOLUTION} thay vì được tính là
+thành công.

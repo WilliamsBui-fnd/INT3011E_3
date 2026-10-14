@@ -17,8 +17,9 @@
   loại riêng timeout, license limit, unavailable, killed và invalid solution.
 - Bộ dữ liệu gộp 241 run; toàn bộ 182 nghiệm SAT đều hợp lệ.
 - Bốn biểu đồ và các bảng báo cáo tái tạo được từ CSV.
-- Báo cáo khoa học `cas-sc` và slide thuyết trình đã điền đầy đủ thông tin tác
-  giả, mã sinh viên, lớp, email và URL repository.
+- Hai bản báo cáo khoa học `cas-sc`: bản đầy đủ 14 trang và bản ngắn 8 trang;
+  slide thuyết trình và cả hai báo cáo đều có thông tin tác giả, mã sinh viên,
+  lớp, email và URL repository.
 - Unit test: 11 bài chạy được đều pass; 2 test CPLEX skip trên máy local vì
   không cài CPLEX/CP Optimizer. Dữ liệu Colab đã xác nhận hai solver CPLEX.
 
@@ -49,7 +50,9 @@
 
 - Dữ liệu raw: `NQueens_BTL1_results/combined_licensed/benchmark_raw.csv`
 - Bảng tổng hợp: `NQueens_BTL1_results/combined_licensed/benchmark_results.csv`
-- Báo cáo: `report/INT3011E_3_24021392_BuiDinhCanh.pdf`
+- Báo cáo đầy đủ, khuyến nghị nộp:
+  `report/INT3011E_3_24021392_BuiDinhCanh_Full.pdf`
+- Báo cáo ngắn: `report/INT3011E_3_24021392_BuiDinhCanh.pdf`
 - Slide: `BaiGiang_NQueens_ChiTiet.pdf`
 - Hướng dẫn chạy: `COLAB_GUIDE.md`
 

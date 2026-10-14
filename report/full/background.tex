@@ -1,0 +1,32 @@
+\section{Phạm vi so sánh và nền tảng liên quan}
+
+N-Queens là bài toán khả thi: với một $N$ cố định, đầu ra cần là một bàn cờ
+hợp lệ hoặc chứng nhận không có nghiệm. Cách đặt vấn đề này quan trọng khi
+so sánh solver. SAT và CP-SAT có thể trả về phép gán; MIP cũng chỉ cần một
+nghiệm khả thi, không có giá trị mục tiêu để tối ưu. Do đó thời gian trong
+báo cáo chỉ nói về việc tìm một nghiệm hoặc kết thúc với kết luận UNSAT trong
+giới hạn đã cấu hình, không nói về số nghiệm hay chất lượng tối ưu.
+
+Ba họ mô hình có cùng tập nghiệm nhưng trình bày thông tin cho solver theo
+những cách khác nhau. SAT chuyển các nhóm đếm thành CNF; PySAT cung cấp
+giao diện tạo ràng buộc cardinality và gọi Glucose3~\cite{pysat-paper,pysat-docs}.
+CP giữ biến nguyên theo hàng và ba nhóm \texttt{AllDifferent}, đúng với mô
+hình N-Queens của OR-Tools~\cite{ortools-nqueens}. MIP giữ biến nhị phân theo
+ô cùng các tổng tuyến tính. Vì vậy số biến của SAT và MIP không so trực tiếp
+với số biến CP: biến nguyên CP có miền $N$ giá trị, còn các biến Boolean SAT
+có thể bao gồm biến phụ của encoding.
+
+Đối với SAT, sự khác biệt giữa các mã hóa AMO có hai tầng. Tầng thứ nhất là
+chi phí dựng công thức: số biến phụ, số clause và độ dài clause. Tầng thứ
+hai là hiệu quả tìm kiếm sau khi công thức đã được đưa vào Glucose3: mức độ
+lan truyền, học clause và lựa chọn biến. Sequential Counter giảm kích thước
+clause theo nhóm so với Pairwise~\cite{sinz2005}, nhưng điều đó không tự nó
+bảo đảm thời gian giải thấp hơn. Báo cáo vì thế trình bày cả cấu trúc CNF,
+thời gian và tỷ lệ hoàn thành; một con số thời gian đơn lẻ không đủ.
+
+Phạm vi thực nghiệm là các $N$ xuất hiện trong bộ dữ liệu đã công bố:
+$1,2,3,4,8,16,32,64,128,256,512,1000$. Không phải mọi phương pháp đều
+được chạy ở mọi $N$. Những ô không có dữ liệu được giữ là không chạy,
+không diễn giải là thất bại. Các so sánh có ý nghĩa nhất nằm trong cùng
+kích thước và cùng giới hạn thời gian; riêng Gurobi ở $N=64,128,256$ được
+bổ sung ở phiên Colab khác nên cần đọc với lưu ý về môi trường.

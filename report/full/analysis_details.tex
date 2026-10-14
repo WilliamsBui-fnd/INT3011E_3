@@ -1,0 +1,79 @@
+\subsection{Ảnh hưởng của cấu trúc encoding}
+
+Tại $N=64$, Sequential có 47{,}752 clause và trung vị
+18{,}143 giây; Pairwise có 428{,}864 clause nhưng trung vị chỉ
+0{,}322 giây. Cả hai hoàn thành 5/5 lần. Đây là một đối chứng rõ
+ràng chống lại cách chọn encoding chỉ bằng số clause. Ít clause hơn
+không bảo đảm tìm kiếm nhanh hơn vì công thức với biến phụ tạo cấu trúc
+lan truyền và lựa chọn nhánh khác. Ở $N=128$, Product có 192{,}890
+clause với trung vị 0{,}719 giây, còn Pairwise có 3{,}462{,}784
+clause và trung vị 3{,}063 giây. Như vậy quan hệ giữa kích thước CNF
+và thời gian thay đổi theo cả encoding lẫn kích thước.
+
+Kết quả Product cũng không đơn điệu: toàn bộ năm run ở $N=32,64$
+đều timeout với ngưỡng 60 giây, nhưng cả năm run ở $N=128$ hoàn
+thành và cả ba run ở $N=1000$ hoàn thành với ngưỡng 120 giây.
+Giới hạn thời gian ở phase Large dài hơn, nên không thể đặt hai
+phase này thành một đường cong cùng điều kiện. Ngay trong cùng phase
+Standard, việc Product timeout ở $N=64$ rồi thành công ở $N=128$
+cho thấy kích thước bàn cờ không phải biến giải thích duy nhất; heuristic
+và cấu trúc CNF có thể tương tác phức tạp. Dữ liệu không đủ để nhận diện
+một cơ chế nhân quả duy nhất.
+
+Ở $N=1000$, Product tạo 1{,}298{,}508 biến và 11{,}942{,}164
+clause. Thời gian dựng CNF trung vị là 7{,}736 giây; phần gọi solver,
+bao gồm nạp clause, có trung vị 20{,}391 giây; trung vị tổng thời gian
+là 28{,}127 giây. Hai thành phần không nên cộng như những trung vị
+độc lập để suy ra chính xác trung vị tổng, nhưng chúng cho thấy cả
+chi phí dựng lẫn chi phí solver đều đáng kể ở kích thước này.
+
+\subsection{Chi tiết 13 run Gurobi sau khi cấp Academic WLS}
+
+Bảng~\ref{tab:full-gurobi} giữ từng lượt Gurobi bổ sung, thay vì chỉ
+trình bày một trung vị. Tất cả 13 run đều có nghiệm hợp lệ. Tại
+$N=128$, bốn run dưới 0{,}58 giây và một run 0{,}879 giây;
+trung vị 0{,}194 giây thể hiện nhóm thời gian thấp nhưng không che
+giấu biến thiên giữa các lần đo. Tại $N=256$, khoảng thời gian là
+1{,}539--3{,}654 giây. Sự biến thiên này là một lý do không dựa
+vào một run đơn lẻ để kết luận ưu thế của solver.
+
+\begin{table}[htbp]
+\centering
+\caption{Thời gian từng run Gurobi Academic WLS tại các kích thước bổ sung.
+Các run đều có trạng thái SAT và nghiệm hợp lệ.}
+\label{tab:full-gurobi}
+\input{\ReportPrefix generated/full_gurobi_runs.tex}
+\end{table}
+
+Mô hình Gurobi tại $N=64,128,256$ lần lượt có $4{,}096$,
+$16{,}384$ và $65{,}536$ biến nhị phân, cùng $382$, $766$ và
+$1{,}534$ ràng buộc. Những số ràng buộc khớp $6N-2$ từ mô hình
+đã trình bày. So sánh thời gian Gurobi với SAT/CP trong cùng bảng
+chỉ mang tính tham chiếu: các run Academic WLS được tạo ở phiên
+Colab khác, dù cùng pipeline và giới hạn thời gian tương ứng.
+
+\subsection{Hai cách dùng CPLEX trong thực nghiệm}
+
+Bảng~\ref{tab:full-cplex} tách CPLEX MIP và CPLEX CP Optimizer.
+Đây là hai solver khác mô hình và khác hệ cấp phép, không phải hai
+tên cho cùng một run. CP Optimizer giải thành công 3/3 lần ở
+$N=8,16,32$ với mô hình $N$ biến nguyên và ba
+\texttt{AllDifferent}. CPLEX MIP giải thành công 3/3 lần ở
+$N=8,16$, nhưng cả ba run $N=32$ gặp \texttt{LICENSE\_LIMIT}
+trước khi có thống kê thời gian giải. Gurobi Academic WLS không
+mở khóa license CPLEX MIP.
+
+\begin{table}[htbp]
+\centering
+\caption{Kết quả hai solver IBM trên Colab. Dấu -- là không có trung vị
+thời gian của run hoàn thành.}
+\label{tab:full-cplex}
+\input{\ReportPrefix generated/full_cplex_table.tex}
+\end{table}
+
+Hai unit test CPLEX có thể bị skip khi chạy trên máy local nếu thiếu
+thư viện \texttt{cplex}/\texttt{docplex} hoặc executable
+\texttt{cpoptimizer}. Việc skip đó phản ánh dependency trên máy local,
+không phủ nhận 18 run CPLEX trong dữ liệu Colab: 15 SAT hợp lệ và ba
+\texttt{LICENSE\_LIMIT}. Khi trình bày kết quả, cần giữ ranh giới
+giữa trạng thái kiểm thử local và kết quả thực nghiệm đã lưu.

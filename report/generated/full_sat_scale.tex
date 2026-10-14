@@ -1,0 +1,46 @@
+\begin{longtable}{rlrrl}
+\caption{Quy mô CNF và trung vị thời gian của từng cấu hình SAT đã chạy. Dấu -- biểu thị không có thống kê do không chạy hoặc run không hoàn thành.}\label{tab:full-sat-scale}\\
+\toprule
+$N$ & Mã hóa & Biến & Clause & Thời gian/Trạng thái \\
+\midrule
+\endfirsthead
+\multicolumn{5}{c}{Bảng \ref{tab:full-sat-scale} (tiếp theo)}\\
+\toprule
+$N$ & Mã hóa & Biến & Clause & Thời gian/Trạng thái \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+16 & Pairwise & 256 & 6,352 & 0.015 (5/5) \\
+16 & Sequential & 1,182 & 2,728 & 0.008 (5/5) \\
+16 & Commander & 536 & 3,056 & 0.151 (5/5) \\
+16 & Product & 820 & 2,804 & 0.397 (5/5) \\
+16 & Binary & 568 & 3,924 & 0.129 (5/5) \\
+32 & Pairwise & 1,024 & 52,640 & 0.036 (5/5) \\
+32 & Sequential & 4,926 & 11,592 & 0.288 (5/5) \\
+32 & Commander & 1,868 & 15,466 & 0.045 (5/5) \\
+32 & Product & -- & -- & TO \\
+32 & Binary & 1,846 & 19,796 & 9.090 (5/5) \\
+64 & Pairwise & 4,096 & 428,864 & 0.322 (5/5) \\
+64 & Sequential & 20,094 & 47,752 & 18.143 (5/5) \\
+64 & Commander & 6,464 & 77,604 & 0.998 (5/5) \\
+64 & Product & -- & -- & TO \\
+64 & Binary & -- & -- & TO \\
+128 & Pairwise & 16,384 & 3,462,784 & 3.063 (5/5) \\
+128 & Sequential & -- & -- & TO \\
+128 & Commander & 23,034 & 413,632 & 1.153 (5/5) \\
+128 & Product & 30,166 & 192,890 & 0.719 (5/5) \\
+128 & Binary & 21,234 & 447,828 & 0.908 (5/5) \\
+256 & Sequential & -- & -- & TO \\
+256 & Commander & 84,624 & 2,177,772 & 8.309 (3/3) \\
+256 & Product & 104,172 & 772,740 & 2.704 (3/3) \\
+256 & Binary & 76,784 & 2,053,460 & 3.147 (3/3) \\
+512 & Sequential & -- & -- & TO \\
+512 & Commander & 316,546 & 11,889,662 & 16.003 (3/3) \\
+512 & Product & 371,940 & 3,124,284 & 14.004 (3/3) \\
+512 & Binary & 287,726 & 9,262,420 & 13.158 (3/3) \\
+1000 & Sequential & -- & -- & TO \\
+1000 & Commander & -- & -- & KILL \\
+1000 & Product & 1,298,508 & 11,942,164 & 28.127 (3/3) \\
+1000 & Binary & -- & -- & TO \\
+\end{longtable}

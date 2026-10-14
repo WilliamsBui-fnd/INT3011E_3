@@ -1,0 +1,76 @@
+\subsection{Ma trận cấu hình và số lần quan sát}
+
+Bảng~\ref{tab:full-phases} cho biết chính xác các cấu hình được thực thi.
+Nhóm cơ sở gồm năm SAT encoding, OR-Tools CP-SAT và Gurobi MIP.
+Ở phase lớn, Pairwise không được chạy vì quy mô clause dự kiến rất cao,
+còn MIP Gurobi được bổ sung riêng đến $N=256$ sau khi có Academic WLS.
+Hai solver CPLEX có phase riêng vì CP Optimizer cần executable của IBM
+ngoài gói Python.
+
+\begin{table}[htbp]
+\centering
+\caption{Các phase trong bộ dữ liệu cuối. Số run là số dòng raw sau gộp.}
+\label{tab:full-phases}
+\begin{tabular}{lcrrr}
+\toprule
+Phase & Kích thước $N$ & Phương pháp & Lặp & Số run \\
+\midrule
+Smoke & $1,2,3,4,8$ & 7 & 1 & 35 \\
+Standard & $16,32,64,128$ & 7 & 5 & 140 \\
+CPLEX & $8,16,32$ & 2 & 3 & 18 \\
+Large & $256,512,1000$ & 5 & 3 & 45 \\
+Gurobi WLS bổ sung & $256$ & 1 & 3 & 3 \\
+\midrule
+Tổng & & & & 241 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Mười run Gurobi tại $N=64,128$ trong phase Standard không được tính thêm:
+chúng thay đúng mười dòng trước đó bị \texttt{LICENSE\_LIMIT} theo khóa
+$(phase,N,method,run)$. Ba run Gurobi $N=256$ là các dòng mới của phase
+Large. Trong code, \texttt{combine\_results.py} nối CSV các phase, chuẩn
+hóa trạng thái legacy và giữ bản ghi cuối với từng khóa. CSV gốc từng phase
+không bị viết đè; file gộp là sản phẩm phân tích.
+
+\subsection{Định nghĩa thời gian và trạng thái}
+
+\texttt{Encoding\_Time} đo thời gian tạo mô hình hoặc CNF trong mỗi worker;
+\texttt{Solving\_Time} đo từ lúc gọi engine cho đến lúc có kết quả.
+Riêng SAT, phần \texttt{Solving\_Time} còn chứa việc khởi tạo Glucose3 và
+đưa từng clause vào solver; với MIP nó chủ yếu bao gồm lời gọi
+\texttt{optimize}/\texttt{solve}. Vì ranh giới API khác nhau, hai cột này
+được dùng để hiểu mỗi phương pháp chứ không so trực tiếp như một phân rã
+hoàn toàn đồng nhất. \texttt{Total\_Time} bắt đầu trước khi dựng mô hình và
+kết thúc sau khi solver trả về; \texttt{Wall\_Time} của process cha còn gồm
+khởi động process con và chuyển kết quả qua queue.
+
+Process cha áp dụng timeout cưỡng bức. Nếu worker còn chạy khi hết hạn,
+run được ghi \texttt{TIMEOUT} và không có thời gian giải hay số biến/clause
+hoàn chỉnh. Nếu worker trả lời, trạng thái \texttt{SAT} chỉ được giữ khi
+nghiệm qua kiểm tra độc lập; \texttt{UNSAT} là kết luận của solver.
+Lỗi giới hạn giấy phép được tách thành \texttt{LICENSE\_LIMIT}.
+Mã thoát $-9$ được ghi \texttt{KILLED}; không tự đồng nhất với OOM khi
+không có log hệ thống. Bởi vậy run không hoàn thành không được gán
+\texttt{Total\_Time}=0 hay giả sử bằng ngưỡng timeout.
+
+Thống kê thời gian cho một cặp $(N,method)$ là trung vị, min và max trên
+các run có trạng thái SAT hoặc UNSAT. Tỷ lệ hoàn thành là số run như vậy
+chia tổng số run đã thực hiện. Với cỡ mẫu chỉ một, ba hoặc năm run, trung
+vị bền hơn trước một lần chậm bất thường nhưng không phải ước lượng chính
+xác cho phân bố thời gian tổng quát; báo cáo không tuyên bố ý nghĩa thống
+kê giữa các solver.
+
+\subsection{Môi trường, seed và khả năng tái lập}
+
+Mỗi solver được cấu hình một worker. MIP và CP được truyền seed theo chỉ
+số lần lặp, còn SAT Glucose3 trong cài đặt hiện tại không nhận seed.
+Do đó lặp lại SAT chủ yếu cho thấy biến thiên runtime trong Colab và
+đường đi mặc định của solver. Metadata phase gốc ghi
+Linux, Python \ResultPython{}, PySAT \ResultPySAT{}, OR-Tools
+\ResultORTools{}, Gurobi \ResultGurobi{} và CPLEX \ResultCPLEX{}.
+Phiên Gurobi Academic WLS bổ sung ghi hai CPU logic, khoảng 12{,}67 GiB
+RAM và Gurobi 13.0.3; CPU model chi tiết không được ghi. Metadata gốc
+không lưu CPU model và RAM, nên không thể hiệu chỉnh khác biệt phần cứng
+giữa hai đợt đo. Mọi kết luận thứ hạng trong báo cáo là mô tả bộ dữ liệu
+này, không phải kết quả benchmark kiểm soát máy hoàn toàn.

@@ -1,0 +1,89 @@
+\section{Bảng kết quả SAT chi tiết}
+
+Bảng~\ref{tab:full-sat-scale} liệt kê mọi cấu hình SAT từ $N=16$ trở
+lên có trong dữ liệu, kể cả trường hợp không hoàn thành. Cột thời gian
+ghi trung vị của các run SAT/UNSAT theo giây và số run hoàn thành/tổng
+số run. TO là toàn bộ run timeout; KILL là toàn bộ run bị SIGKILL.
+Số biến và clause chỉ có khi worker hoàn tất và trả thống kê; không
+điền số giả cho run bị dừng. Pairwise không có dòng ở phase Large vì
+không được đưa vào kế hoạch chạy trên Colab.
+
+\small
+\input{\ReportPrefix generated/full_sat_scale.tex}
+\normalsize
+
+\clearpage
+\section{Đối chiếu trạng thái theo phase}
+
+\begin{center}
+\refstepcounter{table}\label{tab:full-phase-status}
+\small\textbf{Bảng \thetable:} Số run theo trạng thái và phase sau khi gộp
+Gurobi WLS. Không có run \texttt{INVALID\_SOLUTION} hoặc
+\texttt{UNAVAILABLE}.\par\medskip
+\resizebox{\linewidth}{!}{
+\begin{tabular}{lrrrrrr}
+\toprule
+Phase & SAT & UNSAT & TIMEOUT & LICENSE\_LIMIT & KILLED & Tổng \\
+\midrule
+Smoke & 21 & 14 & 0 & 0 & 0 & 35 \\
+Standard & 120 & 0 & 20 & 0 & 0 & 140 \\
+CPLEX & 15 & 0 & 0 & 3 & 0 & 18 \\
+Large & 26 & 0 & 19 & 0 & 3 & 48 \\
+\midrule
+Tổng & 182 & 14 & 39 & 3 & 3 & 241 \\
+\bottomrule
+\end{tabular}}
+\end{center}
+
+Phân rã này xác nhận ba điều thường dễ nhầm lẫn: 14 kết quả UNSAT
+đều từ phase Smoke tại $N=2,3$; ba giới hạn license cuối cùng thuộc
+phase CPLEX; và ba SIGKILL nằm ở phase Large. Không có dòng Gurobi
+\texttt{LICENSE\_LIMIT} sau khi thay thế bằng các run Academic WLS.
+
+\section{Tái tạo bảng, hình và PDF}
+
+Repository tại \url{\RepositoryURL} chứa code, unit test và hai file
+CSV chuẩn trong \texttt{NQueens\_BTL1\_results/combined\_licensed}.
+CSV raw là nguồn gốc cho mọi tổng hợp; file summary chỉ là kết quả
+nhóm theo $(N,method)$. Dữ liệu phase ban đầu vẫn được giữ để kiểm
+tra lịch sử, nhưng gói kết quả đưa về máy có thể chỉ có CSV gộp và
+metadata của các lượt Gurobi mới. Vì vậy có thể tái tạo báo cáo trực
+tiếp từ CSV gộp mà không cần license solver:
+
+\begin{verbatim}
+python3 -m unittest discover -s tests -v
+python3 plot_results.py \
+  --input NQueens_BTL1_results/combined_licensed/benchmark_results.csv \
+  --raw NQueens_BTL1_results/combined_licensed/benchmark_raw.csv \
+  --output-dir NQueens_BTL1_results/combined_licensed
+python3 prepare_report.py
+\end{verbatim}
+
+Sau đó biên dịch \texttt{full\_report\_template.tex} bằng XeLaTeX
+(chạy BibTeX và biên dịch lại để cập nhật tài liệu tham khảo). File
+\texttt{report\_template.tex} tạo bản ngắn từ cùng nguồn
+\texttt{report/main.tex}. Các bảng ở phụ lục được sinh bởi
+\texttt{prepare\_report.py}; không cần sửa số liệu bằng tay. File
+license Gurobi không được đưa vào Git, CSV hay PDF. Nếu chạy lại solver
+trên Colab, cần cấp license qua đường dẫn riêng tư theo hướng dẫn
+\texttt{COLAB\_GUIDE.md}; việc chỉ tái tạo biểu đồ và báo cáo thì
+không cần license.
+
+Để kiểm tra dữ liệu mới trước khi thay báo cáo, có thể đối chiếu số
+run, số khóa $(phase,N,method,run)$ duy nhất, tổng năm trạng thái trong
+Bảng~\ref{tab:full-phase-status}, và cờ
+\texttt{Solution\_Valid=True} ở toàn bộ 182 dòng SAT. Việc giữ cột
+\texttt{Error\_Type}, \texttt{Error\_Message} và
+\texttt{Exit\_Code} trong CSV raw giúp kiểm toán timeout và SIGKILL
+mà không diễn giải thiếu bằng chứng thành lỗi thuật toán.
+
+\subsection*{Lược đồ dữ liệu dùng để kiểm toán}
+
+Mỗi dòng của \texttt{benchmark\_raw.csv} là một lượt chạy, không phải
+một giá trị trung bình. Bốn trường \texttt{Phase, N, Method, Run} tạo
+khóa duy nhất; \texttt{Status} và \texttt{Solution\_Valid} ghi kết luận
+và kiểm tra nghiệm. Các cột \texttt{Variables, Clauses, Constraints}
+chỉ có khi worker trả thống kê. \texttt{Total\_Time} của run hoàn thành
+được dùng tính trung vị; \texttt{Wall\_Time} đo thêm chi phí process cha.
+Cuối cùng, \texttt{Error\_Type}, \texttt{Error\_Message} và
+\texttt{Exit\_Code} cho phép kiểm toán timeout, license limit và SIGKILL.

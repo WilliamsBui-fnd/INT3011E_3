@@ -48,6 +48,8 @@ Các phương pháp đã triển khai:
 │   ├── combined/                # Bộ dữ liệu trước khi cấp Academic WLS
 │   └── combined_licensed/       # Bộ dữ liệu chuẩn dùng trong báo cáo cuối
 ├── report/                      # Báo cáo Elsevier cas-sc và tài liệu tham khảo
+├── full_report_template.tex      # Entry point bản báo cáo đầy đủ
+├── report_template.tex           # Entry point bản báo cáo ngắn
 ├── COLAB_GUIDE.md               # Hướng dẫn chạy từng phase trên Google Colab
 └── PROJECT_STATUS.md            # Trạng thái hoàn thiện và hạn chế còn lại
 ```
@@ -141,15 +143,19 @@ và `plot_clauses.png`.
 
 ## Báo cáo và thuyết trình
 
-- Báo cáo nguồn: `report/main.tex`.
-- PDF báo cáo: `report/INT3011E_3_24021392_BuiDinhCanh.pdf`.
+- Báo cáo nguồn chung: `report/main.tex`; nội dung mở rộng ở `report/full/`.
+- PDF đầy đủ, khuyến nghị nộp:
+  `report/INT3011E_3_24021392_BuiDinhCanh_Full.pdf` (14 trang).
+- PDF ngắn để tham khảo:
+  `report/INT3011E_3_24021392_BuiDinhCanh.pdf` (8 trang).
 - Slide bổ trợ: `BaiGiang_NQueens_ChiTiet.pdf`.
 
-Báo cáo dùng lớp Elsevier `cas-sc` và cần biên dịch bằng XeLaTeX. File
-`report_template.tex` là entry point tương thích khi biên dịch từ thư mục gốc.
-PDF và slide hiện tại dựa trên bộ dữ liệu 241 lượt đã gộp kết quả Gurobi
-Academic WLS. Biên dịch lại bằng `xelatex report_template.tex` và BibTeX theo
-quy trình LaTeX, hoặc dùng bản PDF đã xuất sẵn.
+Báo cáo dùng lớp Elsevier `cas-sc` và cần biên dịch bằng XeLaTeX. Từ thư mục
+gốc, dùng `full_report_template.tex` cho bản đầy đủ hoặc
+`report_template.tex` cho bản ngắn; chạy BibTeX rồi biên dịch lại để cập nhật
+tài liệu tham khảo. Cả hai PDF và slide đều dựa trên bộ dữ liệu 241 lượt đã
+gộp kết quả Gurobi Academic WLS. Chỉ nộp một PDF báo cáo; bản đầy đủ là lựa
+chọn phù hợp hơn nếu thầy muốn bài viết tương tự mẫu nghiên cứu.
 
 ## License thương mại và bảo mật
 

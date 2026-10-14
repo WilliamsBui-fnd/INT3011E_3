@@ -1,0 +1,67 @@
+\subsection{Cấu tạo cụ thể của năm mã hóa}
+
+Các mô tả dưới đây xét một nhóm $X=\{x_1,\ldots,x_k\}$ và chỉ mã hóa AMO.
+ALO của hàng/cột luôn được thêm riêng, không phụ thuộc lựa chọn mã hóa.
+Đối với Pairwise, mỗi cặp $i<j$ tạo
+$(\neg x_i\lor\neg x_j)$, nên có đúng $\binom{k}{2}$ clause và không
+thêm biến. Đây là lựa chọn dễ kiểm chứng nhất, nhưng trên toàn bàn cờ
+số clause tăng bậc ba theo $N$ như đã tính ở trên.
+
+Sequential Counter dùng biến phụ để biểu diễn trạng thái tiền tố đã có một
+literal đúng. Những clause chuyển tiếp bảo đảm nếu một literal mới đúng thì
+trạng thái tiền tố sau nó đúng; một literal mới không thể đúng khi tiền tố
+trước đó đã có literal đúng. Project gọi
+\texttt{CardEnc.atmost(..., encoding=EncType.seqcounter)} thay vì tự viết
+chuỗi clause. Cách triển khai này có số biến phụ và clause tuyến tính theo
+$k$; số lượng chính xác phụ thuộc quy tắc biên của thư viện.
+
+Binary, tức \texttt{EncType.bitwise} trong PySAT, gán cho vị trí $i$ một
+mã nhị phân có $\lceil\log_2 k\rceil$ bit phụ. Nếu $x_i$ đúng, các bit
+phải khớp mã của $i$. Hai literal khác nhau không thể đồng thời đúng vì
+chúng đòi ít nhất một bit nhận hai giá trị trái nhau. Kết quả là số bit
+tăng theo $\log k$, trong khi số clause tăng theo $k\log k$. Mã nhị phân
+không đồng nghĩa với ít clause nhất; nó đánh đổi số biến phụ lấy các
+liên hệ giữa literal gốc và bit mã.
+
+Commander do project tự cài đặt. Đặt $g=\lceil\sqrt{k}\rceil$, chia nhóm
+thành $m=\lceil k/g\rceil$ nhóm có kích thước $g_1,\ldots,g_m$.
+Mỗi nhóm có một biến chỉ huy $c_j$. Các clause
+$(\neg x\lor c_j)$ cho từng thành viên và
+$(\neg c_j\lor\bigvee_{x\in G_j}x)$ buộc $c_j$ đúng đúng khi nhóm
+có thành viên đúng. Pairwise AMO được dùng cả bên trong nhóm và trên
+các chỉ huy. Với nhánh áp dụng khi $k>3$, số biến phụ là $m$ và số
+clause theo đúng implementation là
+\begin{equation}
+ C_{\mathrm{cmd}}(k)
+ =\sum_{j=1}^{m}\binom{g_j}{2}+\binom{m}{2}+k+m.
+\end{equation}
+Ở các nhóm kích thước không quá ba, code chuyển thẳng sang Pairwise.
+
+Product cũng do project tự cài đặt. Đặt
+$p=\lceil\sqrt{k}\rceil$ và $q=\lceil k/p\rceil$, rồi gắn mỗi literal
+với một ô khác nhau trong lưới $p\times q$. Nếu literal đúng, hai chỉ
+báo hàng và cột của ô đó phải đúng. Pairwise AMO trên các chỉ báo hàng
+và cột khiến không thể có hai literal gốc đúng. Với $k>4$, có $p+q$
+biến phụ và đúng
+\begin{equation}
+ C_{\mathrm{prod}}(k)
+ =2k+\binom{p}{2}+\binom{q}{2}
+\end{equation}
+clause. Với $k\leq4$, implementation dùng Pairwise trực tiếp.
+
+Các công thức cho thấy bậc tiệm cận chưa quyết định lựa chọn ở nhóm nhỏ.
+Ví dụ $k=8$: Pairwise tạo 28 clause; Commander chia nhóm kích thước
+$3,3,2$ và tạo 21 clause cùng ba biến phụ; Product dùng lưới $3\times3$
+và tạo 22 clause cùng sáu biến phụ. Đây là số cho một nhóm AMO, chưa
+tính clause ALO hay nhiều nhóm chồng lấn của toàn bàn cờ.
+
+\subsection{Chi phí ở quy mô toàn bàn cờ}
+
+Có $O(N)$ nhóm AMO độ dài tối đa $N$ và tổng độ dài các nhóm là
+$O(N^2)$. Do đó Pairwise cho $O(N^3)$ clause; Sequential và Product
+cho $O(N^2)$; Binary cho $O(N^2\log N)$; Commander cài đặt ở đây
+cho $O(N^{5/2})$. Đây là bậc trên theo cách dựng công thức, không phải
+độ phức tạp thời gian tìm kiếm của Glucose3. Ngay cả khi hai encoding
+có cùng bậc clause, số literal mỗi clause và cấu trúc lan truyền có thể
+khác nhau. Vì vậy phần thực nghiệm đo cả số biến, số clause, thời gian
+và run hoàn thành thay vì chọn encoding bằng phân tích tiệm cận đơn thuần.

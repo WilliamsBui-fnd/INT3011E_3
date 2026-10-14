@@ -139,6 +139,76 @@ def write_status_table(raw, path):
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_full_gurobi_runs(raw, path):
+    runs = raw[(raw["Method"] == "ILP_Gurobi") & raw["N"].isin([64, 128, 256])]
+    if len(runs) != 13 or not runs["Status"].eq("SAT").all():
+        raise SystemExit("Expected 13 successful licensed Gurobi runs")
+    lines = [
+        r"\begin{tabular}{rrrrr}", r"\toprule",
+        r"$N$ & Lượt & Dựng mô hình (s) & Giải (s) & Tổng (s) \\",
+        r"\midrule",
+    ]
+    for row in runs.sort_values(["N", "Run"]).itertuples(index=False):
+        lines.append(
+            f"{int(row.N)} & {int(row.Run)} & {row.Encoding_Time:.4f} "
+            f"& {row.Solving_Time:.4f} & {row.Total_Time:.4f} \\\\"
+        )
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_full_cplex_table(summary, path):
+    lines = [
+        r"\begin{tabular}{llrrl}", r"\toprule",
+        r"Bộ giải & $N$ & Hoàn thành & Trung vị (s) & Trạng thái \\",
+        r"\midrule",
+    ]
+    for method, label in (("MIP_CPLEX", "CPLEX MIP"), ("CP_CPLEX", "CPLEX CP")):
+        for n in (8, 16, 32):
+            group = summary[(summary["Method"] == method) & (summary["N"] == n)]
+            if len(group) != 1:
+                raise SystemExit(f"Missing CPLEX summary row: {method}, N={n}")
+            row = group.iloc[0]
+            median = f"{row.Total_Time:.4f}" if pd.notna(row.Total_Time) else "--"
+            status = "SAT" if row.Successful_Runs == row.Total_Runs else latex_escape(row.Status)
+            lines.append(
+                f"{label} & {n} & {int(row.Successful_Runs)}/{int(row.Total_Runs)} "
+                f"& {median} & {status} \\\\"
+            )
+    lines.extend([r"\bottomrule", r"\end{tabular}"])
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def write_full_sat_scale(summary, path):
+    methods = ["SAT_Pairwise", "SAT_Sequential", "SAT_Commander", "SAT_Product", "SAT_Binary"]
+    lookup = {(int(row.N), row.Method): row for row in summary.itertuples(index=False)}
+    lines = [
+        r"\begin{longtable}{rlrrl}",
+        r"\caption{Quy mô CNF và trung vị thời gian của từng cấu hình SAT đã chạy. Dấu -- biểu thị không có thống kê do không chạy hoặc run không hoàn thành.}\label{tab:full-sat-scale}\\",
+        r"\toprule",
+        r"$N$ & Mã hóa & Biến & Clause & Thời gian/Trạng thái \\",
+        r"\midrule", r"\endfirsthead",
+        r"\multicolumn{5}{c}{Bảng \ref{tab:full-sat-scale} (tiếp theo)}\\",
+        r"\toprule",
+        r"$N$ & Mã hóa & Biến & Clause & Thời gian/Trạng thái \\",
+        r"\midrule", r"\endhead",
+        r"\bottomrule", r"\endfoot",
+    ]
+    for n in (16, 32, 64, 128, 256, 512, 1000):
+        for method in methods:
+            row = lookup.get((n, method))
+            if row is None:
+                continue
+            variables = f"{int(row.Variables):,}" if pd.notna(row.Variables) else "--"
+            clauses = f"{int(row.Clauses):,}" if pd.notna(row.Clauses) else "--"
+            lines.append(
+                f"{n} & {method.removeprefix('SAT_')} & {variables} & {clauses} "
+                f"& {result_cell(row._asdict())} \\\\"
+            )
+    lines.append(r"\end{longtable}")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def write_environment_macros(environment, path):
     packages = environment.get("packages", {})
     values = {
@@ -200,6 +270,9 @@ def main():
     write_fastest_table(summary, generated_dir / "fastest_table.tex")
     write_gurobi_comparison_table(summary, generated_dir / "gurobi_comparison_table.tex")
     write_status_table(raw, generated_dir / "status_table.tex")
+    write_full_gurobi_runs(raw, generated_dir / "full_gurobi_runs.tex")
+    write_full_cplex_table(summary, generated_dir / "full_cplex_table.tex")
+    write_full_sat_scale(summary, generated_dir / "full_sat_scale.tex")
     environment = json.loads(args.environment.read_text(encoding="utf-8"))
     write_environment_macros(environment, generated_dir / "environment.tex")
 

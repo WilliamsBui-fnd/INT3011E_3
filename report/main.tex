@@ -28,9 +28,18 @@
   BoldItalicFont=*-bolditalic]
 \usepackage{amsmath}
 \usepackage{booktabs}
+\usepackage{longtable}
 \usepackage{graphicx}
 \usepackage[numbers]{natbib}
 \usepackage{xurl}
+
+% cas-sc in một footnote ORCID trống ngay cả khi tác giả không khai ORCID.
+\ExplSyntaxOn
+\let\OriginalPrintOrcid\printorcid
+\RenewDocumentCommand\printorcid{}{
+  \seq_if_empty:NF \g_stm_orcid_seq {\OriginalPrintOrcid}
+}
+\ExplSyntaxOff
 
 % Cho phép biên dịch trực tiếp report/main.tex hoặc qua report_template.tex.
 \providecommand{\ReportPrefix}{}
@@ -44,7 +53,11 @@
 \newcommand{\StudentAffiliation}{Sinh viên \StudentID, lớp \ClassCode, Trường Đại học Công nghệ, Đại học Quốc gia Hà Nội; email: \StudentEmail}
 \newcommand{\RepositoryURL}{https://github.com/WilliamsBui-fnd/INT3011E_3}
 
+\ifdefined\FullReport
+\title[mode=title]{Thực nghiệm giải N-Queens bằng SAT, CP và MIP đến N=1000: báo cáo đầy đủ}
+\else
 \title[mode=title]{Thực nghiệm giải N-Queens bằng SAT, CP và MIP đến N=1000}
+\fi
 \shorttitle{Giải N-Queens bằng SAT, CP và MIP}
 
 \author[1]{\StudentName}
@@ -118,6 +131,10 @@ hay không; và (iii) SAT, CP-SAT và MIP khác nhau ra sao về tỷ lệ hoàn
 trong cùng giới hạn thời gian. So sánh thực nghiệm được giới hạn bởi những
 giá trị $N$ đã chạy được và điều kiện cấp phép của từng solver.
 
+\ifdefined\FullReport
+\input{\ReportPrefix full/background.tex}
+\fi
+
 \section{Mô hình bài toán}
 
 Với mỗi ô $(r,c)$, đặt biến Boolean $x_{r,c}$ bằng 1 khi có hậu tại ô đó. Mô
@@ -147,6 +164,10 @@ Hai mô hình biểu diễn cùng một tập cấu hình: hàng $r$ được g�
 đúng khi $x_{r,c}=1$. \texttt{AllDifferent} trên $q_r$ loại xung đột cột;
 hai biểu thức còn lại lần lượt loại hai hướng đường chéo. Điều này cho phép
 kiểm tra nghiệm do mọi solver trả về bằng cùng một hàm xác minh độc lập.
+
+\ifdefined\FullReport
+\input{\ReportPrefix full/model_details.tex}
+\fi
 
 \section{Các phương pháp giải}
 
@@ -201,6 +222,10 @@ $c_g$ và phép OR của nhóm bảo đảm $c_g$ đúng chính xác khi nhóm c
 $q=\lceil k/p\rceil$. Một literal đúng kéo theo hai biến chỉ báo hàng và cột
 tương ứng; AMO Pairwise trên hai tập chỉ báo ngăn đồng thời hai literal đúng.
 Với nhóm tối đa bốn literal, bản cài đặt dùng Pairwise trực tiếp.
+
+\ifdefined\FullReport
+\input{\ReportPrefix full/encoding_details.tex}
+\fi
 
 \subsection{Lập luận bảo toàn nghiệm}
 
@@ -284,6 +309,10 @@ Các run bổ sung dùng một phiên Colab khác đợt đo gốc. Metadata m�
 tổng RAM. Vì vậy các so sánh thời gian giữa Gurobi bổ sung và các solver đã
 đo trước đó chỉ mang tính mô tả, không phải một phép so sánh phần cứng được
 kiểm soát chặt.
+
+\ifdefined\FullReport
+\input{\ReportPrefix full/protocol_details.tex}
+\fi
 
 \section{Kết quả và thảo luận}
 
@@ -404,6 +433,10 @@ Product có 1,298,508 biến và 11,942,164 clause, vẫn hoàn thành với tru
   \label{fig:clauses}
 \end{figure*}
 
+\ifdefined\FullReport
+\input{\ReportPrefix full/analysis_details.tex}
+\fi
+
 \section{Hạn chế và nguy cơ ảnh hưởng tính hợp lệ}
 
 Thứ nhất, Colab là môi trường chia sẻ; mô hình CPU và tổng RAM chưa được lưu
@@ -460,5 +493,10 @@ cáo.
 
 \bibliographystyle{cas-model2-names}
 \bibliography{\ReportPrefix references}
+
+\ifdefined\FullReport
+\appendix
+\input{\ReportPrefix full/appendix.tex}
+\fi
 
 \end{document}
